@@ -1,0 +1,24 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+*.xcodeproj
+Package.resolved
+.vscode
+
+# Stray build artifacts emitted to the repo root
+*.o
+*.d
+*.dia
+*.swiftdeps
+
+# Xcode / simulator
+xcuserdata/
+*.xcworkspace
+*.xcscmblueprint
+
+# Instruments / profiling
+*.trace
+
+# SPM build cache
+.index-build/
