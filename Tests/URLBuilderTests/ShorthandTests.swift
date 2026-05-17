@@ -36,7 +36,8 @@ struct ShorthandTests {
         }
     }
 
-    /// RFC 3986 §3 full URI: scheme + authority (host) + path + query +
+    /// RFC 3986 §3 full URI: scheme + authority (host) + path + query +.
+    ///
     /// fragment. This is the integration shape the DSL is designed for.
     @Test
     func `builds a compact typed host, path, query, and fragment declaration`() {
@@ -106,7 +107,8 @@ struct ShorthandTests {
         #expect(builtURL.absoluteString == "apple:tickets/123/?tag=ios&tag=swift&preview&search=")
     }
 
-    /// RFC 7595 §3.8 + RFC 3986 §3.1 — custom scheme `git+ssh` matches
+    /// RFC 7595 §3.8 + RFC 3986 §3.1 — custom scheme `git+ssh` matches.
+    ///
     /// the scheme ABNF. Lowercased per RFC 3986 §6.2.2.1.
     @Test
     func `builds custom scheme declarations with an authority`() throws {
@@ -160,7 +162,9 @@ struct ShorthandTests {
                 == "https://www.apple.com/tickets/123?search=some%20value&preview&page=2")
     }
 
-    /// RFC 3986 §3.4 — query allows pchar/`/`/`?`. Structured Encodable
+    /// RFC 3986 §3.4 — query allows pchar/`/`/`?`.
+    ///
+    /// Structured Encodable
     /// values are rendered as compact JSON; URLComponents percent-encodes
     /// `{`, `}`, `"` per §2.2 (reserved gen-delims and sub-delims).
     @Test
@@ -233,6 +237,7 @@ struct ShorthandTests {
     }
 
     /// Decimal precision through JSON loses trailing zeros.
+    ///
     /// Pinned as a known caveat; adopt URLQueryValueConvertible to fix.
     @Test
     func `Encodable Decimal loses trailing zeros through JSON literal rendering`() throws {

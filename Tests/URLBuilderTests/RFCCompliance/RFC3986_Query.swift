@@ -12,7 +12,6 @@ import URLBuilder
 
 @Suite("RFC 3986 §3.4 — Query")
 struct RFC3986QueryTests {
-
     // §3.4 — query = *( pchar / "/" / "?" )
     // The reserved query-internal delimiters `&` and `=` MUST be
     // percent-encoded inside a value to keep the key/value structure

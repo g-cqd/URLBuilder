@@ -12,7 +12,6 @@ import URLBuilder
 
 @Suite("RFC 3986 §3.2.2 — Host: IPv4address")
 struct RFC3986IPv4Tests {
-
     // §3.2.2 ABNF:
     //   IPv4address = dec-octet "." dec-octet "." dec-octet "." dec-octet
     //   dec-octet   = DIGIT / %x31-39 DIGIT / "1" 2DIGIT

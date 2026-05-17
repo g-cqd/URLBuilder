@@ -13,7 +13,6 @@ import URLBuilder
 
 @Suite("RFC 3986 §3.3 / §5.2.4 — Path and dot-segments")
 struct RFC3986PathTests {
-
     // §3.3 — segment = *pchar; pchar excludes "/"
     // §5.2.4 — Remove Dot Segments: "." and ".." MUST be removed during
     // resolution. The DSL rejects them at construction time so callers

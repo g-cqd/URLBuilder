@@ -22,7 +22,6 @@ import URLBuilder
 
 @Suite("RFC 2606/6761/6762/7686/8375/9476 — Special-Use TLDs")
 struct SpecialUseTLDTests {
-
     // RFC 2606 §2 — reserved TLDs intentionally never delegated by IANA.
     //   .test  .example  .invalid  .localhost
     // The DSL accepts them; rejection is policy, not URI grammar.

@@ -156,8 +156,7 @@ struct QueryDeduplicationTests {
                 Query("k", "3")
             }
         }
-        let secondPass = try withThrowingURL(configuration: .default.queryDeduplication(.lastWins))
-        {
+        let secondPass = try withThrowingURL(configuration: .default.queryDeduplication(.lastWins)) {
             HTTPS("example.com") {
                 Query("k", "3")
             }
@@ -168,16 +167,14 @@ struct QueryDeduplicationTests {
 
     @Test
     func `.firstWins is idempotent over the rendered URL`() throws {
-        let firstPass = try withThrowingURL(configuration: .default.queryDeduplication(.firstWins))
-        {
+        let firstPass = try withThrowingURL(configuration: .default.queryDeduplication(.firstWins)) {
             HTTPS("example.com") {
                 Query("k", "1")
                 Query("k", "2")
                 Query("k", "3")
             }
         }
-        let secondPass = try withThrowingURL(configuration: .default.queryDeduplication(.firstWins))
-        {
+        let secondPass = try withThrowingURL(configuration: .default.queryDeduplication(.firstWins)) {
             HTTPS("example.com") {
                 Query("k", "1")
             }

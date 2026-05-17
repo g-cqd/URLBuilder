@@ -15,7 +15,6 @@ import URLBuilder
 
 @Suite("RFC 5952 §5 — IPv6 with Embedded IPv4")
 struct RFC5952EmbeddedIPv4Tests {
-
     // RFC 4291 §2.5.5.2 — IPv4-mapped IPv6 addresses: ::ffff:a.b.c.d
     // RFC 5952 §5      — keep the dotted-quad form for these addresses.
     @Test

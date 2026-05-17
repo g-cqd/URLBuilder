@@ -7,7 +7,9 @@ public enum URLHostBuilder {
         [expression]
     }
 
-    /// Adds one unclassified host label. If this builder also contains a
+    /// Adds one unclassified host label.
+    ///
+    /// If this builder also contains a
     /// TLD and no explicit domain, the last string label is inferred as
     /// the registered domain.
     public static func buildExpression(_ expression: String) -> [Host] {
@@ -144,8 +146,7 @@ public enum URLComponentBuilder {
 
     /// Expands a `URLQueryRepresentable` value into a single component
     /// holding the value's full query item list.
-    public static func buildExpression<R: URLQueryRepresentable>(_ expression: R) -> [URLComponent]
-    {
+    public static func buildExpression<R: URLQueryRepresentable>(_ expression: R) -> [URLComponent] {
         let queries = expression.urlQuery
         return queries.isEmpty ? [] : [URLComponent(storage: .queries(queries))]
     }

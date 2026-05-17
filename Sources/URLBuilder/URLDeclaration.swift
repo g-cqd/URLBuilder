@@ -338,7 +338,9 @@ internal struct URLDeclarationState {
         return Self.applyDeduplication(configuration.queryDeduplication, to: items)
     }
 
-    /// Applies the configured dedup policy. Both `.lastWins` and `.firstWins`
+    /// Applies the configured dedup policy.
+    ///
+    /// Both `.lastWins` and `.firstWins`
     /// keep the surviving entry at the *first occurrence's position* in the
     /// rendered URL — matching `URLSearchParams.set` placement semantics
     /// (WHATWG URL §6.2). Only the surviving entry's value differs.

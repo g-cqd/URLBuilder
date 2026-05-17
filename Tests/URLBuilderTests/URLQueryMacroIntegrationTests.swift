@@ -13,7 +13,6 @@ import URLBuilder
 
 @Suite("URLBuilder — @URLQuery integration")
 struct URLQueryMacroIntegrationTests {
-
     // -----------------------------------------------------------------
     // Scalar-only DTO
     // -----------------------------------------------------------------

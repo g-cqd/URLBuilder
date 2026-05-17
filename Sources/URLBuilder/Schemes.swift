@@ -4,7 +4,9 @@ import Foundation
 public struct HTTPS: Sendable {
     internal let declaration: URLDeclaration
 
-    /// Declares an HTTPS URL with no implicit host. Components inside the
+    /// Declares an HTTPS URL with no implicit host.
+    ///
+    /// Components inside the
     /// builder must declare a host.
     public init(@URLComponentBuilder _ content: () -> [URLComponent]) {
         declaration = URLDeclaration(scheme: .https, components: content())
@@ -41,7 +43,9 @@ public struct HTTPS: Sendable {
 public struct HTTP: Sendable {
     internal let declaration: URLDeclaration
 
-    /// Declares an HTTP URL with no implicit host. Components inside the
+    /// Declares an HTTP URL with no implicit host.
+    ///
+    /// Components inside the
     /// builder must declare a host.
     public init(@URLComponentBuilder _ content: () -> [URLComponent]) {
         declaration = URLDeclaration(scheme: .http, components: content())

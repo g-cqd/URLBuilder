@@ -149,7 +149,8 @@ extension Query {
         self.init(name, value.urlQueryValue)
     }
 
-    /// Creates a query item from any `Encodable` value, rendered as compact
+    /// Creates a query item from any `Encodable` value, rendered as compact.
+    ///
     /// JSON (sorted keys, slashes unescaped). For types that also conform to
     /// `URLQueryValueConvertible`, the typed overload above wins.
     public init<Value: Encodable & Sendable>(_ name: String, _ value: Value) {

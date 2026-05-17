@@ -3,7 +3,6 @@ import Testing
 
 @Suite("Documentation — standards appendix coverage")
 struct DocumentationCoverageTests {
-
     @Test
     func `Appendix-cited test names exist in the test suite`() throws {
         let root = URL(

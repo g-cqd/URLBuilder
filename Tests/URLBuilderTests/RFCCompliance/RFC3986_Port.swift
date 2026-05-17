@@ -13,7 +13,6 @@ import URLBuilder
 
 @Suite("RFC 3986 §3.2.3 — Port")
 struct RFC3986PortTests {
-
     // §3.2.3 — port = *DIGIT
     // RFC 9110 §4.2.1/4.2.2 — TCP port range 1-65535 (port 0 reserved per RFC 6335).
     @Test(

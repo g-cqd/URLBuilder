@@ -42,7 +42,9 @@ public struct Fragment: Sendable {
     }
 }
 
-/// Sets the port. Default HTTP and HTTPS ports are omitted when rendering.
+/// Sets the port.
+///
+/// Default HTTP and HTTPS ports are omitted when rendering.
 public struct Port: Sendable {
     internal let value: Int
 
@@ -51,7 +53,9 @@ public struct Port: Sendable {
     }
 }
 
-/// Sets an IPv6 host literal. Brackets are optional in the argument.
+/// Sets an IPv6 host literal.
+///
+/// Brackets are optional in the argument.
 ///
 /// IPv6 parsing uses the platform C library (`inet_pton`/`inet_ntop`)
 /// and is available on Darwin and Glibc platforms.

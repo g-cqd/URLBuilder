@@ -24,12 +24,16 @@ public struct Host: Sendable {
         self.storages = storages
     }
 
-    /// Adds one subdomain label. Multiple declarations preserve order.
+    /// Adds one subdomain label.
+    ///
+    /// Multiple declarations preserve order.
     public static func subdomain(_ label: String) -> Host {
         Host(storages: [.subdomain(label)])
     }
 
-    /// Adds one subdomain label. Multiple declarations preserve order.
+    /// Adds one subdomain label.
+    ///
+    /// Multiple declarations preserve order.
     public func subdomain(_ label: String) -> Host {
         appending(.subdomain(label))
     }
@@ -78,12 +82,16 @@ public struct Host: Sendable {
         appending(.tld(tld))
     }
 
-    /// Sets the top-level domain or public suffix. Shorthand for `topLevelDomain`.
+    /// Sets the top-level domain or public suffix.
+    ///
+    /// Shorthand for `topLevelDomain`.
     public static func tld(_ tld: TopLevelDomain) -> Host {
         .topLevelDomain(tld)
     }
 
-    /// Sets the top-level domain or public suffix. Shorthand for `topLevelDomain`.
+    /// Sets the top-level domain or public suffix.
+    ///
+    /// Shorthand for `topLevelDomain`.
     public func tld(_ tld: TopLevelDomain) -> Host {
         topLevelDomain(tld)
     }
@@ -93,7 +101,9 @@ public struct Host: Sendable {
         Host(storages: [.host(host)])
     }
 
-    /// Sets an IPv6 host literal. Brackets are optional in the argument.
+    /// Sets an IPv6 host literal.
+    ///
+    /// Brackets are optional in the argument.
     ///
     /// IPv6 parsing uses the platform C library (`inet_pton`/`inet_ntop`)
     /// and is available on Darwin and Glibc platforms.

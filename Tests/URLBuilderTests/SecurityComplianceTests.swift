@@ -17,7 +17,6 @@ import URLBuilder
 
 @Suite("Security — High-risk behaviours")
 struct SecurityHighSeverityTests {
-
     // -------------------------------------------------------------------
     // Host string `@` injection bypasses userinfo omission
     //
@@ -174,7 +173,6 @@ struct SecurityHighSeverityTests {
 
 @Suite("Security — Medium-risk behaviours")
 struct SecurityMediumSeverityTests {
-
     // -------------------------------------------------------------------
     // Percent-encoded dot segments bypass traversal rejection
     //
@@ -263,7 +261,6 @@ struct SecurityMediumSeverityTests {
 
 @Suite("Security — Low-risk behaviours")
 struct SecurityLowSeverityTests {
-
     // -------------------------------------------------------------------
     // Port 0 is reserved
     //
@@ -300,7 +297,6 @@ struct SecurityLowSeverityTests {
 
 @Suite("Security — Informational")
 struct SecurityInfoTests {
-
     // -------------------------------------------------------------------
     // JSON `withoutEscapingSlashes` leaves `/` literal in Encodable query
     // values. Within RFC 3986 §3.4: `/` is allowed in query (pchar | "/" |
@@ -325,7 +321,6 @@ struct SecurityInfoTests {
 
 @Suite("Security — Correctness regressions with security impact")
 struct SecurityCorrectnessRegressionTests {
-
     // -------------------------------------------------------------------
     // `invalidURLComponents` catch-all error path
     //

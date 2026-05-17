@@ -11,7 +11,6 @@ import URLBuilder
 
 @Suite("RFC 3986 §3.5 — Fragment")
 struct RFC3986FragmentTests {
-
     // §3.5 — fragment = *( pchar / "/" / "?" )
     @Test
     func `§3.5 — preserves '/' and '?' in fragment`() throws {

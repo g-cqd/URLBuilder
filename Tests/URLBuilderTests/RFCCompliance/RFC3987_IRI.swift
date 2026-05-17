@@ -14,7 +14,6 @@ import URLBuilder
 
 @Suite("RFC 3987 / RFC 5890-5894 — IRI and IDNA2008")
 struct RFC3987IRITests {
-
     // RFC 3987 §3.1 — Mapping IRI to URI
     // RFC 5890 §2.3 — U-label / A-label
     // RFC 5891 §4 — Lookup processing converts U-label to A-label
@@ -64,8 +63,7 @@ struct RFC3987IRITests {
         "\u{2028}",
         "\u{2029}",
     ])
-    func `RFC 3987 §4.1 — rejects bidi formatting characters in path/query/fragment`(scalar: String)
-    {
+    func `RFC 3987 §4.1 — rejects bidi formatting characters in path/query/fragment`(scalar: String) {
         #expect(throws: URLBuildError.invalidPathSegment("safe\(scalar)path")) {
             try withThrowingURL {
                 HTTPS("example.com") { Path("safe\(scalar)path") }
@@ -78,8 +76,7 @@ struct RFC3987IRITests {
             }
         }
 
-        #expect(throws: URLBuildError.invalidQueryValue(name: "name", value: "safe\(scalar)value"))
-        {
+        #expect(throws: URLBuildError.invalidQueryValue(name: "name", value: "safe\(scalar)value")) {
             try withThrowingURL {
                 HTTPS("example.com") { Query("name", "safe\(scalar)value") }
             }

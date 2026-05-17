@@ -7,7 +7,9 @@ import Foundation
 public struct PathSegment: Hashable, Sendable, ExpressibleByStringLiteral {
     internal let values: [String]
 
-    /// A trailing-slash marker. Renders as a final empty segment.
+    /// A trailing-slash marker.
+    ///
+    /// Renders as a final empty segment.
     public static let trailingSlash = PathSegment("")
 
     public init(_ value: String) {

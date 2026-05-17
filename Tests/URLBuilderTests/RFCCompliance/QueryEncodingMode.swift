@@ -25,7 +25,6 @@ import URLBuilder
 
 @Suite("URLBuildConfiguration — query encoding rendering")
 struct QueryEncodingModeTests {
-
     // -------------------------------------------------------------------
     // Default mode — RFC 3986 §2.1
     //   "If a reserved character is found in a URI component and no

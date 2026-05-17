@@ -18,7 +18,6 @@ import URLBuilder
 
 @Suite("WHATWG URL — RFC-vs-WHATWG divergence pins")
 struct WHATWGURLDivergenceTests {
-
     // WHATWG: backslash in path is normalised to forward slash for
     // "special" schemes (http/https/ws/wss/ftp/file).
     // RFC 3986 §3.3:  pchar does NOT include "\".  The DSL rejects.
@@ -34,8 +33,7 @@ struct WHATWGURLDivergenceTests {
     // members of unreserved / reserved / pct-encoded.
     @Test(
         arguments: ["a\tb", "a\nb", "a\rb"])
-    func `RFC 3986 §2 — rejects ASCII control characters (vs. WHATWG strips them)`(segment: String)
-    {
+    func `RFC 3986 §2 — rejects ASCII control characters (vs. WHATWG strips them)`(segment: String) {
         #expect(throws: URLBuildError.invalidPathSegment(segment)) {
             try withThrowingURL { HTTPS("example.com") { Path(segment) } }
         }

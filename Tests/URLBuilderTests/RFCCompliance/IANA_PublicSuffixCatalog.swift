@@ -24,7 +24,6 @@ import URLBuilder
 
 @Suite("IANA + PSL — Public Suffix Catalog (generated)")
 struct IANAPublicSuffixCatalogTests {
-
     // Sanity: catalog is non-empty and contains common entries.
     @Test
     func `IANA — common gTLDs are present in icannTLDs`() {
@@ -104,7 +103,6 @@ struct IANAPublicSuffixCatalogTests {
 
 @Suite("TopLevelDomain — @dynamicMemberLookup chain composition")
 struct TLDChainCompositionTests {
-
     // ----- Raw-value composition -----
 
     @Test(arguments: [

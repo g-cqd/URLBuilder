@@ -14,7 +14,6 @@ import URLBuilder
 
 @Suite("URLBuilder — URLQueryRepresentable")
 struct URLQueryRepresentableTests {
-
     // -----------------------------------------------------------------
     // Standard scalar conformances
     // -----------------------------------------------------------------

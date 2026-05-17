@@ -15,7 +15,6 @@ import URLBuilder
 
 @Suite("URLBuildConfiguration — public-suffix enforcement")
 struct PublicSuffixEnforcementTests {
-
     // -------------------------------------------------------------------
     // Permissive mode (default) — every existing call site keeps working.
     // -------------------------------------------------------------------

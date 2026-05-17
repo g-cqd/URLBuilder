@@ -15,7 +15,6 @@ import URLBuilder
 
 @Suite("RFC 3492 + RFC 5891 §4.4 — Punycode (toASCII)")
 struct RFC3492PunycodeTests {
-
     // RFC 3492 §3 / RFC 5891 §4.4 — well-known Punycode encodings.
     // German "bücher" → "xn--bcher-kva"; French "café" → "xn--caf-dma";
     // Cyrillic "пример" → "xn--e1afmkfd". The A-label MUST start with

@@ -48,7 +48,6 @@ private let pslWithHeaders = """
 
 @Suite("IANA parser")
 struct IANAParserTests {
-
     @Test
     func `captures the version line and strips the leading hash`() {
         let catalogue = PublicSuffixGenerator.parseIANA(ianaFixture)
@@ -110,7 +109,6 @@ struct IANAParserTests {
 
 @Suite("PSL parser")
 struct PSLParserTests {
-
     @Test
     func `captures VERSION and COMMIT headers when present`() {
         let catalogue = PublicSuffixGenerator.parsePSL(pslWithHeaders)
@@ -174,7 +172,6 @@ struct PSLParserTests {
 
 @Suite("Swift identifier rules")
 struct IdentifierTests {
-
     @Test
     func `hyphens are converted to underscores`() {
         #expect(PublicSuffixGenerator.swiftIdentifier(for: "co-op") == "co_op")
@@ -201,7 +198,6 @@ struct IdentifierTests {
 
 @Suite("Emission")
 struct EmissionTests {
-
     @Test
     func `output is deterministic for the same input`() {
         let first = PublicSuffixGenerator.generate(ianaSource: ianaFixture, pslSource: pslFixture)

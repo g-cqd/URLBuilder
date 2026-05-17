@@ -5,11 +5,15 @@ import Foundation
 /// Invalid declarations trap because this overload is intended for static,
 /// SwiftUI-style URL declarations. Use `withThrowingURL` when invalid input
 /// should be handled at runtime.
+// swift-format-ignore: AlwaysUseLowerCamelCase
 public func URLBuilder(@URLRootBuilder _ content: () -> [URLDeclaration]) -> URL {
     URLBuilder(configuration: .default, content)
 }
 
-/// Builds a URL with an explicit configuration. Traps on invalid input.
+/// Builds a URL with an explicit configuration.
+///
+/// Traps on invalid input.
+// swift-format-ignore: AlwaysUseLowerCamelCase
 public func URLBuilder(
     configuration: URLBuildConfiguration,
     @URLRootBuilder _ content: () -> [URLDeclaration]

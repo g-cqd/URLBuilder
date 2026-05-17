@@ -1,7 +1,8 @@
 import Foundation
 import PackagePlugin
 
-/// Build-tool plugin that regenerates `PublicSuffix.swift` from the
+/// Build-tool plugin that regenerates `PublicSuffix.swift` from the.
+///
 /// vendored IANA Root Zone Database and Mozilla Public Suffix List
 /// before `URLBuilder` compiles. The command's inputs and outputs are
 /// declared so SwiftPM only re-runs it when the upstream files change.

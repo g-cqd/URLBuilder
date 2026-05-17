@@ -11,7 +11,6 @@ import URLBuilder
 
 @Suite("RFC 3986 §3.2.2 — Host: IPvFuture")
 struct RFC3986IPvFutureTests {
-
     // §3.2.2 ABNF:
     //   IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
     @Test

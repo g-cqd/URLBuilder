@@ -8,7 +8,6 @@ import Foundation
 /// CLI wrapper and the build tool plugin are thin shells around this
 /// type so the parsing and emission rules can be exercised by tests.
 public enum PublicSuffixGenerator {
-
     /// Generates the full Swift source for the given upstream files.
     public static func generate(ianaSource: String, pslSource: String) -> String {
         let iana = parseIANA(ianaSource)
@@ -33,7 +32,9 @@ public enum PublicSuffixGenerator {
         public let exceptions: [String]
     }
 
-    /// Parses the IANA TLD list. The first line is the upstream version
+    /// Parses the IANA TLD list.
+    ///
+    /// The first line is the upstream version
     /// comment; subsequent single-token lines are the TLD labels.
     public static func parseIANA(_ source: String) -> IANACatalogue {
         var version = ""
@@ -59,6 +60,7 @@ public enum PublicSuffixGenerator {
     }
 
     /// Parses the ICANN section of the Mozilla Public Suffix List.
+    ///
     /// Wildcard prefixes (`*.`) and exception markers (`!`) are tracked
     /// separately because PSL matching gives them different semantics.
     public static func parsePSL(_ source: String) -> PSLCatalogue {
@@ -413,6 +415,7 @@ extension String {
         }
     }
 
+    // swift-format-ignore: AlwaysUseLowerCamelCase
     fileprivate var isValidA_LABELDomain: Bool {
         guard
             allSatisfy({ character in

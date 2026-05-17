@@ -25,7 +25,6 @@ import URLBuilder
 
 @Suite("RFC 3629 §3 — UTF-8 percent-encoding (ISO/IEC 10646 → octets)")
 struct RFC3629UTF8EncodingTests {
-
     // -------------------------------------------------------------------
     // §3 — 2-byte sequences (U+0080..U+07FF) — %C2..%DF prefix
     // -------------------------------------------------------------------

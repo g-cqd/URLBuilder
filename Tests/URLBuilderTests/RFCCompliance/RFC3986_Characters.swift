@@ -14,7 +14,6 @@ import URLBuilder
 
 @Suite("RFC 3986 §2 — Characters and percent-encoding")
 struct RFC3986CharactersTests {
-
     // §2.1 Percent-Encoding
     // > A percent-encoded octet is encoded as a character triplet,
     // > consisting of the percent character "%" followed by the two
@@ -118,7 +117,6 @@ struct RFC3986CharactersTests {
 
 @Suite("RFC 3986 §2 — NUL byte rejection")
 struct RFC3986NULRejectionTests {
-
     @Test
     func `§2 — rejects NUL in path segment`() {
         #expect(throws: URLBuildError.invalidPathSegment("bad\0segment")) {

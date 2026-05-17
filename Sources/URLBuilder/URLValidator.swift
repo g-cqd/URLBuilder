@@ -142,7 +142,8 @@ internal enum URLValidator {
         return segment
     }
 
-    /// Enforces that the composed `tld` value matches a known ICANN public
+    /// Enforces that the composed `tld` value matches a known ICANN public.
+    ///
     /// suffix when the configuration opts in. Permissive mode is a no-op.
     static func enforce(
         _ enforcement: URLBuildConfiguration.TLDEnforcement,
@@ -155,7 +156,8 @@ internal enum URLValidator {
         }
     }
 
-    /// Enforces that the trailing portion of `host` matches a known ICANN
+    /// Enforces that the trailing portion of `host` matches a known ICANN.
+    ///
     /// public suffix when the configuration opts in. IPv4 literals are
     /// exempt; IPv6 literals never reach this path. Permissive mode is a
     /// no-op.
@@ -171,7 +173,8 @@ internal enum URLValidator {
         }
     }
 
-    /// Renders `string` per the WHATWG `application/x-www-form-urlencoded`
+    /// Renders `string` per the WHATWG `application/x-www-form-urlencoded`.
+    ///
     /// shape: SPACE → `+`, literal `+` → `%2B`, all other reserved bytes
     /// percent-encoded as UTF-8. Pass-through bytes follow HTML living-
     /// standard form-encoding (alphanumerics + `*`, `-`, `.`, `_`).

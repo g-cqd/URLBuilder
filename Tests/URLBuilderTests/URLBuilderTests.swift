@@ -13,7 +13,9 @@ import URLBuilder
 
 @Suite("URLBuilder — DSL ergonomics")
 struct URLBuilderTests {
-    /// RFC 3986 §3 — single URI per declaration. RFC 3986 §3.4 query.
+    /// RFC 3986 §3 — single URI per declaration.
+    ///
+    /// RFC 3986 §3.4 query.
     /// IRI percent-encoding for "some value" → "some%20value" per §2.1.
     @Test
     func `builds the SwiftUI-style declaration from the README`() {
@@ -101,7 +103,9 @@ struct URLBuilderTests {
         #expect(httpURL.absoluteString == "http://apple.com")
     }
 
-    /// RFC 3986 §3.2.3 — port = *DIGIT. Non-default ports are preserved.
+    /// RFC 3986 §3.2.3 — port = *DIGIT.
+    ///
+    /// Non-default ports are preserved.
     @Test
     func `supports non-default ports`() throws {
         let url = try withThrowingURL {
@@ -115,7 +119,9 @@ struct URLBuilderTests {
         #expect(url.absoluteString == "https://apple.com:8443")
     }
 
-    /// RFC 3986 §3 — `URI = scheme ":" hier-part [ ... ]`. With no
+    /// RFC 3986 §3 — `URI = scheme ":" hier-part [ ...
+    ///
+    /// ]`. With no
     /// authority, hier-part is path-rootless / path-absolute / path-empty.
     /// RFC 7595 §3.8 — custom schemes follow the same syntactic rules.
     @Test
@@ -142,7 +148,9 @@ struct URLBuilderTests {
         }
     }
 
-    /// RFC 3986 §3.2.2 IP-literal grammar. RFC 4291 §2.2 IPv6 text.
+    /// RFC 3986 §3.2.2 IP-literal grammar.
+    ///
+    /// RFC 4291 §2.2 IPv6 text.
     /// RFC 5952 — canonical text form.
     @Test
     func `supports IPv6 hosts`() throws {
@@ -167,7 +175,9 @@ struct URLBuilderTests {
         }
     }
 
-    /// RFC 3987 §3.1 IRI-to-URI mapping. RFC 5891 §4 IDNA lookup
+    /// RFC 3987 §3.1 IRI-to-URI mapping.
+    ///
+    /// RFC 5891 §4 IDNA lookup
     /// processing — U-label converted to A-label (Punycode).
     /// Backed by ISO/IEC 10646 (Unicode UCS) via RFC 5892.
     @Test
