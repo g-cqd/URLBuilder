@@ -181,13 +181,20 @@ Out-of-scope references:
   opt-in `.firstWins` and `.lastWins` deduplication policies for
   integrations that expect map-like query semantics; both policies keep
   the first occurrence's rendered position.
-- We encode typed query values through `Encodable`: scalar values
-  render as plain query values, while arrays and objects render as
-  compact JSON values that `URLComponents` then percent-encodes.
+- We render a typed query value one of two ways. A value conforming to
+  `URLQueryValueConvertible` — `Bool`, the integer and floating-point types,
+  `Decimal` (via its base-10 `description`, avoiding binary-float rounding),
+  `String`, `Substring`, `UUID`, `Date`, and `RawRepresentable` over a
+  convertible raw value — renders as a plain value. Any other `Encodable`
+  value renders as compact JSON (sorted keys, slashes unescaped) via
+  [ADJSON](https://github.com/g-cqd/ADJSON), which `URLComponents` then
+  percent-encodes. When a type satisfies both, the convertible path wins.
 - We expose `URLQueryRepresentable` for DTOs that expand to multiple
   query items. The `@URLQuery` macro can synthesize that conformance
   from stored properties, and `@Query(.key)`, `@Query(.flag)`, and
-  `@Query(.ignore)` customize individual properties.
+  `@Query(.ignore)` customize individual properties. Optional properties are
+  omitted when `nil`; `[T]` and `Set<T>` unfold to repeated keys, with `Set`
+  iteration emitted in a deterministic sorted order for stable URLs.
 
 ### Userinfo
 
@@ -284,9 +291,9 @@ Other test files:
 - `Tests/URLBuilderTests/URLBuilderTests.swift` — DSL ergonomic tests
   (result-builder shape, conditionals, optionals) annotated with the RFC clause
   they incidentally exercise.
-- `Tests/URLBuilderTests/ShorthandTests.swift` — DSL shorthand and Encodable
-  query-value rendering, including the scalar matrix that pins the current
-  JSON-encoder behaviour for `Bool`, `Int`, `Double`, `Decimal`, and `String`.
+- `Tests/URLBuilderTests/ShorthandTests.swift` — DSL shorthand and query-value
+  rendering, including the scalar matrix (`Bool`, `Int`, `Double`, `Decimal`
+  via `description`, `String`) and the compact-JSON `Encodable` path via ADJSON.
 - `Tests/URLBuilderTests/QueryDeduplicationTests.swift` — opt-in
   query-deduplication policies and their interaction with query flags
   and form URL encoding.

@@ -3,20 +3,85 @@
 import CompilerPluginSupport
 import PackageDescription
 
-let settings: [SwiftSetting] = [
+// Strict, dependency-safe settings applied to every target. `.v6` turns on complete
+// strict-concurrency checking; the upcoming features tighten existentials and import
+// visibility. None of these are unsafe flags, so the library stays resolvable through a
+// version-pinned `.package(url:from:)` requirement.
+let strictSettings: [SwiftSetting] = [
+    .swiftLanguageMode(.v6),
     .treatAllWarnings(as: .error),
-    .unsafeFlags(["-Xfrontend", "-warn-long-function-bodies=100"]),
-    .unsafeFlags(["-Xfrontend", "-warn-long-expression-type-checking=100"]),
+    .enableUpcomingFeature("ExistentialAny"),
+    .enableUpcomingFeature("InternalImportsByDefault"),
+    .enableUpcomingFeature("MemberImportVisibility"),
 ]
+
+// Compile-time type-check timing warnings flag slow expressions / function bodies. They use
+// unsafe flags, which would block version-based dependency resolution if applied to any target
+// in the shipped `URLBuilder` product, so they live only on the test targets.
+let timingWarningFlags: [SwiftSetting] = [
+    .unsafeFlags([
+        "-Xfrontend", "-warn-long-function-bodies=100",
+        "-Xfrontend", "-warn-long-expression-type-checking=100",
+    ])
+]
+
+// Tests: strict + timing warnings + runtime actor data-race checks.
+let testSettings: [SwiftSetting] =
+    strictSettings + timingWarningFlags + [.unsafeFlags(["-enable-actor-data-race-checks"])]
+
+// Dev-only tooling is gated behind `URLBUILDER_DEV` so packages that depend on URLBuilder never
+// resolve it. Contributors and CI set `URLBUILDER_DEV=1` to enable the DocC plugin
+// (`swift package generate-documentation`) and build-time lint enforcement. The `format` / `lint`
+// command plugins carry no external dependencies, so they are always available without the flag.
+let isDev = Context.environment["URLBUILDER_DEV"] != nil
+
+// ADJSON dependency. JSON encoding for `Encodable` query values routes through ADJSON (sorted keys,
+// unescaped slashes, Foundation-free core).
+//
+// Default: the published `main` branch. While it is branch-pinned, a tagged URLBuilder release
+// cannot itself be resolved via `.package(url:from:)` (SwiftPM forbids a versioned package
+// depending on an unversioned one).
+//
+// Local development: set `URLBUILDER_LOCAL_ADJSON` to depend on a local checkout instead, so
+// URLBuilder and ADJSON can be iterated together —
+//   • `URLBUILDER_LOCAL_ADJSON=1`            → the sibling `../ADJSON`
+//   • `URLBUILDER_LOCAL_ADJSON=/path/to/ADJSON` → a custom path
+// This is intentionally separate from `URLBUILDER_DEV` so the DocC / lint tooling never requires an
+// ADJSON checkout (and CI's docs job, which sets `URLBUILDER_DEV=1`, keeps resolving the remote).
+let adjsonDependency: Package.Dependency = {
+    guard let local = Context.environment["URLBUILDER_LOCAL_ADJSON"] else {
+        return .package(url: "https://github.com/g-cqd/ADJSON.git", branch: "main")
+    }
+    let path = (local.isEmpty || local == "1") ? "../ADJSON" : local
+    return .package(path: path)
+}()
+
+var packageDependencies: [Package.Dependency] = [
+    .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0"),
+    adjsonDependency,
+]
+if isDev {
+    packageDependencies.append(
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
+}
+
+// Build-time formatting enforcement attaches to the library only in dev/CI. A build-tool plugin on
+// a library target would otherwise run for everyone who depends on URLBuilder, so it stays gated.
+let libraryBuildPlugins: [Target.PluginUsage] =
+    isDev ? ["PublicSuffixGeneratorPlugin", "LintBuild"] : ["PublicSuffixGeneratorPlugin"]
 
 let package = Package(
     name: "URLBuilder",
+    // The deployment floor is pinned by ADJSON's `Synchronization` (`Mutex`/`Atomic`) requirement,
+    // which ships in macOS 15 / iOS 18 / tvOS 18 / watchOS 11 / visionOS 2. URLBuilder itself only
+    // needs macOS 13 / iOS 16 (for `host(percentEncoded:)`), so the ADJSON dependency is what sets
+    // the floor here. (The Swift 6.3 tools-version is a *toolchain* requirement, not a deployment one.)
     platforms: [
-        .macOS(.v13),
-        .iOS(.v16),
-        .tvOS(.v16),
-        .watchOS(.v9),
-        .visionOS(.v1),
+        .macOS(.v15),
+        .iOS(.v18),
+        .tvOS(.v18),
+        .watchOS(.v11),
+        .visionOS(.v2),
     ],
     products: [
         .library(
@@ -24,36 +89,37 @@ let package = Package(
             targets: ["URLBuilder"]
         )
     ],
-    dependencies: [
-        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0")
-    ],
+    dependencies: packageDependencies,
     targets: [
         .target(
             name: "URLBuilder",
-            dependencies: ["URLBuilderMacros"],
-            swiftSettings: settings,
-            plugins: [
-                .plugin(name: "PublicSuffixGeneratorPlugin")
-            ]
+            dependencies: [
+                "URLBuilderMacros",
+                .product(name: "ADJSON", package: "ADJSON"),
+            ],
+            swiftSettings: strictSettings,
+            plugins: libraryBuildPlugins
         ),
         .macro(
             name: "URLBuilderMacros",
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
                 .product(name: "SwiftDiagnostics", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
             ],
-            swiftSettings: settings
+            swiftSettings: strictSettings
         ),
         .target(
             name: "PublicSuffixGeneratorCore",
-            swiftSettings: settings
+            swiftSettings: strictSettings
         ),
         .executableTarget(
             name: "public-suffix-generator",
             dependencies: ["PublicSuffixGeneratorCore"],
-            swiftSettings: settings
+            swiftSettings: strictSettings
         ),
         .plugin(
             name: "PublicSuffixGeneratorPlugin",
@@ -62,10 +128,22 @@ let package = Package(
                 .target(name: "public-suffix-generator")
             ]
         ),
+        // Developer tooling. The command plugins are dependency-free (they drive the toolchain's
+        // bundled `swift format`), so they impose nothing on packages that depend on URLBuilder.
+        .plugin(
+            name: "Format",
+            capability: .command(
+                intent: .custom(verb: "format", description: "Format Swift sources with swift-format"),
+                permissions: [.writeToPackageDirectory(reason: "Format Swift sources with swift-format")])),
+        .plugin(
+            name: "Lint",
+            capability: .command(
+                intent: .custom(verb: "lint", description: "Check formatting and shipped-library discipline"))),
+        .plugin(name: "LintBuild", capability: .buildTool()),
         .testTarget(
             name: "URLBuilderTests",
-            dependencies: ["URLBuilder"],
-            swiftSettings: settings
+            dependencies: ["URLBuilder", "PublicSuffixGeneratorCore"],
+            swiftSettings: testSettings
         ),
         .testTarget(
             name: "URLBuilderMacrosTests",
@@ -73,12 +151,12 @@ let package = Package(
                 "URLBuilderMacros",
                 .product(name: "SwiftSyntaxMacrosGenericTestSupport", package: "swift-syntax"),
             ],
-            swiftSettings: settings
+            swiftSettings: testSettings
         ),
         .testTarget(
             name: "PublicSuffixGeneratorTests",
             dependencies: ["PublicSuffixGeneratorCore"],
-            swiftSettings: settings
+            swiftSettings: testSettings
         ),
     ]
 )

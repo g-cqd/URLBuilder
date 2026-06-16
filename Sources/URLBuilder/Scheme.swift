@@ -1,8 +1,12 @@
 import Foundation
 
 /// A URL scheme.
-public struct Scheme: Hashable, Sendable, ExpressibleByStringLiteral {
+public struct Scheme: Hashable, Sendable, ExpressibleByStringLiteral, CustomStringConvertible {
     public let rawValue: String
+
+    public var description: String {
+        rawValue
+    }
 
     public static let http = Scheme("http")
     public static let https = Scheme("https")
@@ -54,6 +58,12 @@ public struct TopLevelDomain: Hashable, Sendable, ExpressibleByStringLiteral,
     /// `withThrowingURL(configuration:_:)` (or `URLBuilder(configuration:_:)`)
     /// to reject suffix chains that are absent from
     /// `PublicSuffix.contains(_:)`.
+    ///
+    /// Member-shadowing footgun: the real members `description`, `rawValue`, and
+    /// `custom` win over dynamic lookup, so `TLD.com.description` is the `String`
+    /// "com" — NOT `TopLevelDomain("com.description")`. Compose those reserved
+    /// labels explicitly with `TopLevelDomain.custom("com.description")` if ever
+    /// needed. Every other label routes through this subscript.
     public subscript(dynamicMember member: String) -> TopLevelDomain {
         TopLevelDomain(rawValue + "." + member)
     }

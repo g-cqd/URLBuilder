@@ -1,11 +1,12 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-/// `@Query(.key("…") | .flag | .ignore)` is a syntactic marker read by.
+/// `@Query` is a syntactic marker that `@URLQuery` reads during synthesis.
 ///
-/// `@URLQuery` during synthesis. It generates no peers itself.
-public struct QueryAttributeMacro: PeerMacro {
-    public static func expansion(
+/// It configures a single property via `.key("…")`, `.flag`, or `.ignore` and
+/// generates no peer declarations of its own.
+struct QueryAttributeMacro: PeerMacro {
+    static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext

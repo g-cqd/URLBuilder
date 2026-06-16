@@ -25,7 +25,7 @@ struct ShorthandTests {
     }
 
     private struct BrokenQueryValue: Encodable, Sendable {
-        func encode(to encoder: Encoder) throws {
+        func encode(to encoder: any Encoder) throws {
             throw EncodingError.invalidValue(
                 "broken",
                 EncodingError.Context(
@@ -236,18 +236,36 @@ struct ShorthandTests {
         #expect(url.absoluteString.contains("d=3.14"))
     }
 
-    /// Decimal precision through JSON loses trailing zeros.
+    /// `Decimal` renders as a plain scalar through its base-10 `description`.
     ///
-    /// Pinned as a known caveat; adopt URLQueryValueConvertible to fix.
+    /// It takes the `URLQueryValueConvertible` path rather than the generic JSON
+    /// encoder. Foundation normalizes a `Decimal`'s trailing zeros at
+    /// construction (even from an explicit scale), so `10.50` is already `10.5`
+    /// before it ever reaches the query layer.
     @Test
-    func `Encodable Decimal loses trailing zeros through JSON literal rendering`() throws {
-        let amount = Decimal(string: "10.50")!
+    func `Decimal renders as a plain scalar via description`() throws {
+        let amount = try #require(Decimal(string: "10.50"))
         let url = try withThrowingURL {
             HTTPS("example.com") {
                 Query("amount", amount)
             }
         }
         #expect(url.absoluteString == "https://example.com?amount=10.5")
+    }
+
+    /// A high-precision `Decimal` renders every significant digit.
+    ///
+    /// `description` preserves the full base-10 value, where a binary `Double`
+    /// round-trip would round `0.1234567890123456789` to `0.12345678901234568`.
+    @Test
+    func `Decimal preserves precision beyond Double via description`() throws {
+        let precise = try #require(Decimal(string: "0.1234567890123456789"))
+        let url = try withThrowingURL {
+            HTTPS("example.com") {
+                Query("amount", precise)
+            }
+        }
+        #expect(url.absoluteString == "https://example.com?amount=0.1234567890123456789")
     }
 
     @Test

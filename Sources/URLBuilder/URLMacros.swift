@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Builds a URL from a result-builder declaration. Traps on invalid input.
 ///

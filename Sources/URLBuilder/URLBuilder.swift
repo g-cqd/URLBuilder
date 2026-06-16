@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Builds a URL with a result-builder declaration.
 ///

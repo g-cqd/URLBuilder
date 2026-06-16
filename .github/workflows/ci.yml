@@ -1,0 +1,321 @@
+# Single workflow: lint → build → test (chained in one job), plus a Linux build, an API-stability
+# check, a cross-platform compile matrix, a public-suffix generator reproducibility check, a
+# sanitizer pass over the IPv6 C-interop, and a DocC build+deploy — all gated on the main job so
+# nothing fans out if lint/build/test fails.
+#
+# Why one gate / few jobs: chaining lint+build+test into one job pays setup (checkout, Xcode
+# select, dependency resolve, cache restore) once and reuses the warm `.build`. The other jobs run
+# only after the gate, and only when relevant.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["README.md", "CONTRIBUTING.md", "LICENSE", ".gitignore", ".githooks/**"]
+  pull_request:
+    paths-ignore: ["README.md", "CONTRIBUTING.md", "LICENSE", ".gitignore", ".githooks/**"]
+  # On-demand trigger for the slow platform / sanitizer / docs jobs.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on branches/PRs; never cancel an in-progress run on main.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build-test:
+    name: Lint, build & test (macOS)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Show toolchain
+        run: swift --version
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**', 'Tests/**', 'Plugins/**') }}
+          restore-keys: |
+            spm-${{ runner.os }}-${{ hashFiles('Package.swift') }}-
+            spm-${{ runner.os }}-
+      - name: Lint (formatting + shipped-library discipline)
+        run: swift package lint
+      - name: Build
+        run: swift build
+      - name: Test (full conformance suite, with coverage)
+        run: swift test --enable-code-coverage
+      - name: Coverage summary
+        if: always()
+        run: |
+          set -o pipefail
+          BIN=$(swift build --show-bin-path)
+          PROF="$BIN/codecov/default.profdata"
+          XCTEST=$(find "$BIN" -name '*.xctest' -maxdepth 1 | head -1)
+          if [ -n "$XCTEST" ] && [ -f "$PROF" ]; then
+            TOOL="$XCTEST/Contents/MacOS/$(basename "$XCTEST" .xctest)"
+            {
+              echo "## Code coverage"
+              echo '```text'
+              xcrun llvm-cov report "$TOOL" -instr-profile "$PROF" \
+                -ignore-filename-regex='(Tests|\.build|PublicSuffix\.swift)' 2>/dev/null | tail -25
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  changes:
+    name: Detect IPv6 / validator changes
+    needs: build-test
+    # Path gate for the sanitizer pass. The one unsafe boundary in the library is the IPv6 literal
+    # path, which calls the platform C library (`inet_pton`/`inet_ntop`) in `URLValidator.swift`.
+    # A PR touching the validator should trip ASan/UBSan too; other PRs skip the slow pass.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      validator: ${{ steps.filter.outputs.validator }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            validator:
+              - 'Sources/URLBuilder/URLValidator.swift'
+
+  linux:
+    name: Build & test (Linux)
+    needs: build-test
+    # Guards portability for Linux consumers (the IPv6 path uses Glibc there). Advisory
+    # (continue-on-error): the package's tools-version (6.3) tracks an unreleased toolchain, so this
+    # runs the main-nightly Linux container, which can be unstable independent of the code. Promote
+    # to a required gate once a matching stable Linux toolchain ships.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    container: swiftlang/swift:nightly-main-jammy
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+      - name: Show toolchain
+        run: swift --version
+      - name: Build & test
+        run: swift test
+
+  api-stability:
+    name: API breaking changes
+    needs: build-test
+    # Catch accidental public-API removals/changes in PRs (additions are fine). Compares the PR head
+    # against the PR's base commit on main.
+    if: github.event_name == 'pull_request'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Diagnose API breaking changes vs base
+        run: swift package diagnose-api-breaking-changes "${{ github.event.pull_request.base.sha }}"
+
+  platforms:
+    name: Build (${{ matrix.platform }})
+    needs: build-test
+    # Cross-platform compile is broad but costly: run it on main / on demand, not on every PR
+    # (the macOS job above already covers compilation for PRs).
+    if: github.event_name != 'pull_request'
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iOS, tvOS, watchOS, visionOS]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Cache SwiftPM + DerivedData
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            .derivedData
+          key: spm-${{ runner.os }}-${{ matrix.platform }}-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**') }}
+          restore-keys: |
+            spm-${{ runner.os }}-${{ matrix.platform }}-${{ hashFiles('Package.swift') }}-
+            spm-${{ runner.os }}-${{ matrix.platform }}-
+      - name: Build for ${{ matrix.platform }}
+        run: >-
+          xcodebuild build
+          -scheme URLBuilder
+          -destination "generic/platform=${{ matrix.platform }}"
+          -derivedDataPath .derivedData
+          -skipMacroValidation
+          -skipPackagePluginValidation
+
+  generator-reproducibility:
+    name: Public-suffix generator reproducibility
+    needs: build-test
+    # `Sources/URLBuilder/PublicSuffix.swift` is generated at build time from the vendored IANA +
+    # Mozilla inputs and is NOT committed. Generation must be deterministic: regenerating from the
+    # same inputs must produce a byte-identical file. Run the standalone generator twice and diff.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-gen-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/PublicSuffixGeneratorCore/**', 'Sources/public-suffix-generator/**') }}
+          restore-keys: |
+            spm-${{ runner.os }}-gen-${{ hashFiles('Package.swift') }}-
+            spm-${{ runner.os }}-gen-
+      - name: Build the generator
+        run: swift build --product public-suffix-generator
+      - name: Regenerate twice and assert byte-identical output
+        run: |
+          set -euo pipefail
+          BIN="$(swift build --product public-suffix-generator --show-bin-path)/public-suffix-generator"
+          IANA="Documentation/References/TLDs/tlds-alpha-by-domain.txt"
+          PSL="Documentation/References/TLDs/public_suffix_list.dat"
+          "$BIN" "$IANA" "$PSL" /tmp/PublicSuffix.1.swift
+          "$BIN" "$IANA" "$PSL" /tmp/PublicSuffix.2.swift
+          diff -u /tmp/PublicSuffix.1.swift /tmp/PublicSuffix.2.swift
+          echo "Generator output is reproducible."
+
+  downstream-resolvability:
+    name: Downstream resolvability (URL dependency)
+    needs: build-test
+    # Locks the round-1 dependency-safety fix: the shipped `URLBuilder` product carries no unsafe
+    # build flags, so a downstream package can depend on it *by URL* (source control) and resolve
+    # the graph. A throwaway consumer pins this repo by `file://` URL at the commit under test and
+    # runs `swift package resolve`. URLBuilder is pinned by revision (itself unversioned), so its
+    # branch-pinned ADJSON dependency resolves cleanly; switch the consumer to `from:` once both
+    # URLBuilder and ADJSON publish versioned tags.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Resolve a throwaway consumer that depends on URLBuilder by URL
+        run: |
+          set -euo pipefail
+          REPO="$PWD"
+          SHA="$(git rev-parse HEAD)"
+          CONSUMER="$(mktemp -d)/Consumer"
+          mkdir -p "$CONSUMER/Sources/Consumer"
+          cat > "$CONSUMER/Package.swift" <<EOF
+          // swift-tools-version: 6.3
+          import PackageDescription
+          let package = Package(
+            name: "Consumer",
+            dependencies: [.package(url: "file://$REPO", revision: "$SHA")],
+            targets: [
+              .executableTarget(
+                name: "Consumer",
+                dependencies: [.product(name: "URLBuilder", package: "URLBuilder")])
+            ]
+          )
+          EOF
+          printf 'import URLBuilder\n@main struct Consumer { static func main() {} }\n' \
+            > "$CONSUMER/Sources/Consumer/main.swift"
+          cd "$CONSUMER"
+          swift package resolve
+          echo "URLBuilder resolves as a URL-based dependency."
+
+  sanitizers:
+    name: Sanitize (address + undefined)
+    needs: [build-test, changes]
+    # ASan/UBSan rebuild the whole graph under instrumentation, so run them on main / on demand —
+    # and, additionally, on any PR that touches the IPv6 C-interop in `URLValidator.swift` (gated by
+    # the `changes` job), the one place an OOB / use-after-free could be introduced. The full test
+    # suite (IPv6 literals, host/PSL/path parsing) is the stress input. TSan is omitted: the library
+    # is value-typed, immutable, and fully Sendable, so there is no shared mutable state to race.
+    if: github.event_name != 'pull_request' || needs.changes.outputs.validator == 'true'
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Show toolchain
+        run: swift --version
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-san-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**', 'Tests/**', 'Plugins/**') }}
+          restore-keys: |
+            spm-${{ runner.os }}-san-${{ hashFiles('Package.swift') }}-
+            spm-${{ runner.os }}-san-
+      - name: Test under address + undefined sanitizers
+        run: swift test --sanitize=address --sanitize=undefined
+
+  docs:
+    name: Build & deploy docs (Pages)
+    needs: build-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    # Serialize Pages deploys without cancelling an in-flight publish.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    env:
+      URLBUILDER_DEV: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-docs-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**') }}
+          restore-keys: |
+            spm-${{ runner.os }}-docs-${{ hashFiles('Package.swift') }}-
+            spm-${{ runner.os }}-docs-
+      - name: Build DocC site (static hosting)
+        run: |
+          swift package --allow-writing-to-directory "$PWD/_site" \
+            generate-documentation --target URLBuilder \
+            --disable-indexing \
+            --transform-for-static-hosting \
+            --hosting-base-path URLBuilder \
+            --output-path "$PWD/_site"
+      - name: Add root redirect to the documentation landing page
+        run: |
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=documentation/urlbuilder/">
+          <link rel="canonical" href="documentation/urlbuilder/">
+          <title>URLBuilder</title>
+          <a href="documentation/urlbuilder/">URLBuilder documentation</a>
+          HTML
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v5

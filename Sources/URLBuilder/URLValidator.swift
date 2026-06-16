@@ -47,6 +47,13 @@ internal enum URLValidator {
         // DISALLOWED scalars instead of rejecting them.
         try rejectDISALLOWEDCodepoints(in: rawHost)
 
+        // Deliberately the lenient `URL(string:)`, NOT
+        // `URL(string:encodingInvalidCharacters: false)`: only the lenient
+        // initializer runs Foundation's IDNA, converting a U-label host
+        // (`münchen.de`) to its A-label (`xn--mnchen-3ya.de`) per RFC 5891. The
+        // strict initializer disables that conversion and would reject every
+        // internationalized domain. This boundary stays fenced by the RFC 5892
+        // pre-filter above and the per-label ASCII-LDH re-validation below.
         guard
             let url = URL(string: "https://\(rawHost)"),
             let host = url.host(percentEncoded: false)?.lowercased()
@@ -91,6 +98,11 @@ internal enum URLValidator {
             throw .invalidIPv6Address(rawAddress)
         }
 
+        // Final structural acceptance via the same lenient `URL(string:)` used for
+        // reg-name hosts: confirm Foundation round-trips the canonical IPv6 literal
+        // as a colon-bearing host. No IDNA applies here — the address is already
+        // ASCII — so the strict initializer would behave identically; the lenient
+        // form is kept for parity with the reg-name path above.
         guard
             let url = URL(string: "https://[\(normalizedAddress)]"),
             url.host(percentEncoded: false)?.contains(":") == true
@@ -142,9 +154,10 @@ internal enum URLValidator {
         return segment
     }
 
-    /// Enforces that the composed `tld` value matches a known ICANN public.
+    /// Enforces that a composed top-level domain is a known public suffix.
     ///
-    /// suffix when the configuration opts in. Permissive mode is a no-op.
+    /// When `enforcement` is `.strict`, the lowercased `tld` must appear in the
+    /// embedded ICANN public-suffix list; permissive mode is a no-op.
     static func enforce(
         _ enforcement: URLBuildConfiguration.TLDEnforcement,
         on tld: TopLevelDomain
@@ -156,11 +169,11 @@ internal enum URLValidator {
         }
     }
 
-    /// Enforces that the trailing portion of `host` matches a known ICANN.
+    /// Enforces that a host ends with a known public suffix.
     ///
-    /// public suffix when the configuration opts in. IPv4 literals are
-    /// exempt; IPv6 literals never reach this path. Permissive mode is a
-    /// no-op.
+    /// When `enforcement` is `.strict`, `host` must have a longest-match in the
+    /// embedded ICANN public-suffix list. IPv4 literals are exempt; IPv6
+    /// literals never reach this path; permissive mode is a no-op.
     static func enforcePublicSuffix(
         _ enforcement: URLBuildConfiguration.TLDEnforcement,
         on host: String
@@ -173,11 +186,12 @@ internal enum URLValidator {
         }
     }
 
-    /// Renders `string` per the WHATWG `application/x-www-form-urlencoded`.
+    /// Renders `string` as `application/x-www-form-urlencoded` text.
     ///
-    /// shape: SPACE → `+`, literal `+` → `%2B`, all other reserved bytes
-    /// percent-encoded as UTF-8. Pass-through bytes follow HTML living-
-    /// standard form-encoding (alphanumerics + `*`, `-`, `.`, `_`).
+    /// Per the WHATWG URL Standard: SPACE becomes `+`, a literal `+` becomes
+    /// `%2B`, and all other reserved bytes are percent-encoded as UTF-8.
+    /// Pass-through bytes follow the HTML form-encoding set (alphanumerics plus
+    /// `*`, `-`, `.`, `_`).
     static func formURLEncoded(_ string: String) -> String {
         let percentEncoded =
             string.addingPercentEncoding(
@@ -221,12 +235,26 @@ internal enum URLValidator {
         charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"
     )
 
+    /// Whether `host` is an IPv4 literal, for PSL-enforcement exemption.
+    ///
+    /// Uses the platform `inet_pton(AF_INET, …)` so the exemption matches exactly
+    /// what the OS (and Foundation's host parser) treats as an IPv4 address,
+    /// closing the seam where a textual 4-dotted-decimal heuristic and Foundation
+    /// could disagree about whether a host is an IP. Non-POSIX platforms (no
+    /// `inet_pton`) fall back to the textual heuristic.
     private static func looksLikeIPv4Literal(_ host: String) -> Bool {
-        let parts = host.split(separator: ".", omittingEmptySubsequences: false)
-        guard parts.count == 4 else { return false }
-        return parts.allSatisfy { part in
-            part.isEmpty == false && part.allSatisfy(\.isASCIIDigit)
-        }
+        #if canImport(Darwin) || canImport(Glibc)
+            var address = in_addr()
+            return host.withCString { pointer in
+                inet_pton(AF_INET, pointer, &address) == 1
+            }
+        #else
+            let parts = host.split(separator: ".", omittingEmptySubsequences: false)
+            guard parts.count == 4 else { return false }
+            return parts.allSatisfy { part in
+                part.isEmpty == false && part.allSatisfy(\.isASCIIDigit)
+            }
+        #endif
     }
 
     static func validatedFragment(_ fragment: String) throws(URLBuildError) -> String {
@@ -373,7 +401,9 @@ internal enum URLValidator {
             let bytes = buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
             return String(decoding: bytes, as: UTF8.self).lowercased()
         #else
-            #warning("IPv6 literal validation is unavailable on platforms without Darwin or Glibc.")
+            // No POSIX `inet_pton`/`inet_ntop` is available here (e.g. Windows). Fail closed by
+            // returning `nil` so the caller rejects the IPv6 literal, rather than emitting a
+            // `#warning` — which `treatAllWarnings(as: .error)` would turn into a hard build break.
             return nil
         #endif
     }

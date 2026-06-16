@@ -171,10 +171,16 @@ vendored IANA Root Zone Database and Mozilla Public Suffix List under
 refresh those two files and rebuild — the plugin re-runs whenever its
 inputs change.
 
-## Query values through `Encodable`
+## Query values
 
-Scalar values render as plain query values; arrays and objects render
-as compact JSON values, which `URLComponents` then percent-encodes:
+A query value renders one of two ways. Any type conforming to
+`URLQueryValueConvertible` renders directly as a plain value — `String`,
+`Substring`, `Bool`, the integer and floating-point types, `Decimal` (via
+its base-10 `description`), `UUID`, and `Date`, plus `RawRepresentable`
+enums over a convertible raw value. Any other `Encodable` value renders as
+compact JSON (sorted keys, slashes unescaped) via
+[ADJSON](https://github.com/g-cqd/ADJSON), which `URLComponents` then
+percent-encodes:
 
 ```swift
 struct SearchFilter: Encodable, Sendable {
@@ -209,6 +215,11 @@ let url = try withThrowingURL {
     }
 }
 ```
+
+Optional properties are omitted when `nil`; arrays and sets unfold to
+repeated keys. `Set` iteration is emitted in a deterministic (sorted)
+order, so the rendered URL is stable across runs (important for HMAC URL
+signing, cache keys, and snapshot tests).
 
 Repeated query keys are preserved by default. Callers that need
 map-like behaviour can opt into `URLBuildConfiguration.QueryDeduplication`
@@ -319,17 +330,43 @@ swift test
 The repository includes `.swift-format`, based on Swift 6.3
 `swift-format` defaults and amended for 4-space indentation, 4-space tab
 width, indented switch cases, and the DSL's uppercase entry-point names.
+Dependency-free SwiftPM command plugins wrap the toolchain's bundled
+`swift-format`, so there is nothing to install:
 
 ```sh
-swift format format --configuration .swift-format --in-place --recursive Package.swift Sources Tests Plugins
-swift format lint --configuration .swift-format --strict --recursive Package.swift Sources Tests Plugins
+swift package format        # format in place
+swift package lint          # formatting gate + shipped-library discipline (what CI runs)
 ```
+
+`swift package lint` is the single source of truth for the lint rules and is
+what CI and the committed pre-commit hook run. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the full developer workflow (git hooks,
+sanitizers, the `URLBUILDER_DEV` flag, and the public-suffix generator), and the
+[DocC documentation site](https://g-cqd.github.io/URLBuilder/) for the API
+reference.
 
 ## Requirements
 
-- Swift 6.3 toolchain or later.
-- A platform with the standard BSD/POSIX IP-address parsing routines,
-  which we use to canonicalise IPv6 literals.
+- **Swift 6.3 toolchain or later** (a *toolchain* requirement; the macros and
+  strict-concurrency settings need it).
+- **Deployment floor: macOS 15 / iOS 18 / tvOS 18 / watchOS 11 / visionOS 2.**
+  This is set by the [ADJSON](https://github.com/g-cqd/ADJSON) dependency's use
+  of `Synchronization` (`Mutex`/`Atomic`); URLBuilder itself only needs
+  macOS 13 / iOS 16 (for `host(percentEncoded:)`).
+- A platform with the standard BSD/POSIX IP-address parsing routines
+  (`inet_pton`/`inet_ntop`), which we use to canonicalise IPv6 literals and to
+  detect IPv4 literals.
+
+## Dependencies
+
+- [**swift-syntax**](https://github.com/swiftlang/swift-syntax) — powers the
+  `@URLQuery` / `#URL` macros.
+- [**ADJSON**](https://github.com/g-cqd/ADJSON) — the JSON encoding path for
+  `Encodable` query values (sorted keys, unescaped slashes, Foundation-free
+  core).
+
+swift-docc-plugin is gated behind `URLBUILDER_DEV`, so packages that depend on
+URLBuilder never resolve it.
 
 ## License
 

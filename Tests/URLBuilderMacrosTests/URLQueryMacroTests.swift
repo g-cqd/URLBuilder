@@ -1,3 +1,4 @@
+import SwiftDiagnostics
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosGenericTestSupport
@@ -231,14 +232,321 @@ struct URLQueryMacroTests {
         )
     }
 
+    @Test
+    func `@URLQuery unfolds an optional array to repeated keys`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let tags: [String]?
+            }
+            """,
+            """
+            struct Input {
+              let tags: [String]?
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                if let tags {
+                    for element in tags {
+                        Query("tags", element)
+                    }
+                }
+              }
+            }
+            """
+        )
+    }
+
+    @Test
+    func `@URLQuery sorts Set iteration for a deterministic URL`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let ids: Set<Int>
+            }
+            """,
+            """
+            struct Input {
+              let ids: Set<Int>
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                for element in ids.sorted(by: { String(describing: $0) < String(describing: $1)
+                    }) {
+                    Query("ids", element)
+                }
+              }
+            }
+            """
+        )
+    }
+
+    @Test
+    func `@Query(.key) escapes special characters in the rendered key`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              @Query(.key("a\\"b")) let value: String
+            }
+            """,
+            """
+            struct Input {
+              let value: String
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("a\\"b", value)
+              }
+            }
+            """
+        )
+    }
+
+    // M1 — a `static`/`class` member is type-level state and must not leak into
+    // every instance's query.
+    @Test
+    func `@URLQuery skips static and class members`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              static let version = "1"
+              let q: String
+            }
+            """,
+            """
+            struct Input {
+              static let version = "1"
+              let q: String
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("q", q)
+              }
+            }
+            """
+        )
+    }
+
+    // M6 — a stored property with a `didSet`/`willSet` observer is real storage
+    // and must NOT be skipped as if it were computed.
+    @Test
+    func `@URLQuery keeps a stored property that has observers`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              var page: Int = 1 {
+                didSet {}
+              }
+            }
+            """,
+            """
+            struct Input {
+              var page: Int = 1 {
+                didSet {}
+              }
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("page", page)
+              }
+            }
+            """
+        )
+    }
+
+    // M7 — every binding in a multi-binding declaration is emitted, with the
+    // trailing annotation propagated to earlier bindings.
+    @Test
+    func `@URLQuery emits every binding of a multi-binding declaration`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let a, b: Int
+            }
+            """,
+            """
+            struct Input {
+              let a, b: Int
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("a", a)
+                Query("b", b)
+              }
+            }
+            """
+        )
+    }
+
+    // M2 — a keyword-named property's value reference is backtick-escaped so the
+    // expansion compiles.
+    @Test
+    func `@URLQuery backticks a keyword-named property reference`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let `default`: Int
+            }
+            """,
+            """
+            struct Input {
+              let `default`: Int
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("default", `default`)
+              }
+            }
+            """
+        )
+    }
+
+    // M3 — a dictionary property has no canonical query unfold and is diagnosed.
+    @Test
+    func `@URLQuery diagnoses a dictionary property`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let q: String
+              let headers: [String: Int]
+            }
+            """,
+            """
+            struct Input {
+              let q: String
+              let headers: [String: Int]
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("q", q)
+              }
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message:
+                        "@URLQuery does not support dictionary properties — a dictionary has no "
+                        + "canonical query unfold. Encode it explicitly with a custom "
+                        + "URLQueryRepresentable, or exclude it with @Query(.ignore).",
+                    line: 4,
+                    column: 16,
+                    severity: .error
+                )
+            ]
+        )
+    }
+
+    // M4 — an un-annotated collection literal would silently JSON-encode; require
+    // an explicit annotation instead.
+    @Test
+    func `@URLQuery diagnoses an un-annotated collection literal`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let q: String
+              let tags = ["ios", "swift"]
+            }
+            """,
+            """
+            struct Input {
+              let q: String
+              let tags = ["ios", "swift"]
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("q", q)
+              }
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message:
+                        "@URLQuery needs an explicit type annotation on a collection property "
+                        + "(e.g. `let tags: [String]`) so it can unfold to repeated query items "
+                        + "instead of encoding the literal.",
+                    line: 4,
+                    column: 7,
+                    severity: .error
+                )
+            ]
+        )
+    }
+
+    // M5 — a nested optional is not `URLQueryValueConvertible` after one unwrap;
+    // diagnose rather than emit a non-compiling binding.
+    @Test
+    func `@URLQuery diagnoses a nested optional property`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let q: String
+              let page: Int??
+            }
+            """,
+            """
+            struct Input {
+              let q: String
+              let page: Int??
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("q", q)
+              }
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message:
+                        "@URLQuery does not support nested optionals — flatten to a single "
+                        + "optional, or exclude it with @Query(.ignore).",
+                    line: 4,
+                    column: 13,
+                    severity: .error
+                )
+            ]
+        )
+    }
+
     private func expandsTo(
         _ source: String,
         _ expanded: String,
+        diagnostics: [DiagnosticSpec] = [],
         sourceLocation: Testing.SourceLocation = #_sourceLocation
     ) {
         assertMacroExpansion(
             source,
             expandedSource: expanded,
+            diagnostics: diagnostics,
             macroSpecs: macroSpecs,
             failureHandler: { spec in
                 Issue.record(

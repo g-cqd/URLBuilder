@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A URL declaration attached to a scheme.
 ///
@@ -70,6 +70,12 @@ public struct URLDeclaration: Sendable {
                 case .rfc3986:
                     components.queryItems = queryItems
                 case .formURLEncoded:
+                    // Deliberately bypass `URLComponents.queryItems` and assign the
+                    // already-encoded string to `percentEncodedQuery`: the `queryItems`
+                    // setter applies RFC 3986 query encoding, which would re-encode our
+                    // form bytes (turning `+` back into `%2B`, etc.). `formURLEncoded`
+                    // has already produced the exact `application/x-www-form-urlencoded`
+                    // octets, so they are stored verbatim.
                     components.percentEncodedQuery = queryItems.map { item in
                         let encodedName = URLValidator.formURLEncoded(item.name)
                         guard let value = item.value else { return encodedName }

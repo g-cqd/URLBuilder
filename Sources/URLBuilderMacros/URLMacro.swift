@@ -1,9 +1,10 @@
 import SwiftSyntax
+import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
 /// `#URL { ... }` — expands to `URLBuilder { ... }`.
-public struct URLMacro: ExpressionMacro {
-    public static func expansion(
+struct URLMacro: ExpressionMacro {
+    static func expansion(
         of node: some FreestandingMacroExpansionSyntax,
         in context: some MacroExpansionContext
     ) -> ExprSyntax {

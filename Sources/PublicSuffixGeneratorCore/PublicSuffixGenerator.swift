@@ -126,6 +126,51 @@ public enum PublicSuffixGenerator {
 
     // MARK: - Emission
 
+    /// Source text of the `String` domain helpers emitted into `PublicSuffix.swift`.
+    ///
+    /// The single source of truth for the EMITTED copy of `hasAllowedDomainScalars`
+    /// and `isValidA_LABELDomain`; interpolated into `emit(...)`. The generator's
+    /// own compiled copies (the `fileprivate` extension at the bottom of this file)
+    /// mirror the same logic and are held in lockstep by `DomainNormalizerParityTests`,
+    /// which runs `normalizedDomain` and the emitted `PublicSuffix` normalizer over
+    /// shared fixtures.
+    static let domainHelpersSource = """
+        private extension String {
+          var hasAllowedDomainScalars: Bool {
+            unicodeScalars.allSatisfy { scalar in
+              if scalar.value < 0x80 {
+                return (65...90).contains(scalar.value)
+                  || (97...122).contains(scalar.value)
+                  || (48...57).contains(scalar.value)
+                  || scalar.value == 45
+                  || scalar.value == 46
+              }
+              switch scalar.properties.generalCategory {
+              case .lowercaseLetter, .uppercaseLetter, .titlecaseLetter, .modifierLetter,
+                .otherLetter, .decimalNumber, .letterNumber, .nonspacingMark, .spacingMark:
+                return true
+              default:
+                return false
+              }
+            }
+          }
+
+          var isValidA_LABELDomain: Bool {
+            guard allSatisfy({ character in
+              character.isASCII && (character.isLetter || character.isNumber || character == "-" || character == ".")
+            }) else {
+              return false
+            }
+            return split(separator: ".", omittingEmptySubsequences: false)
+              .allSatisfy { label in
+                label.isEmpty == false
+                  && label.first != "-"
+                  && label.last != "-"
+              }
+          }
+        }
+        """
+
     /// Emits the final Swift source.
     public static func emit(iana: IANACatalogue, psl: PSLCatalogue) -> String {
         var out = ""
@@ -270,11 +315,15 @@ public enum PublicSuffixGenerator {
                 return candidate.split(separator: ".").count > current.split(separator: ".").count
               }
 
-              private static func normalizedDomain(_ value: String) -> String? {
+              // Internal (not private) so DomainNormalizerParityTests can run it
+              // directly against the generator-side `PublicSuffixGenerator.normalizedDomain`.
+              static func normalizedDomain(_ value: String) -> String? {
                 let lowercased = value.lowercased()
                 guard lowercased.isEmpty == false, lowercased.hasAllowedDomainScalars else {
                   return nil
                 }
+                // Lenient `URL(string:)` deliberately runs Foundation's IDNA
+                // (U-label -> A-label); `isValidA_LABELDomain` re-checks ASCII LDH.
                 guard
                   let url = URL(string: "https://\\(lowercased)"),
                   let host = url.host(percentEncoded: false)?.lowercased(),
@@ -286,40 +335,7 @@ public enum PublicSuffixGenerator {
               }
             }
 
-            private extension String {
-              var hasAllowedDomainScalars: Bool {
-                unicodeScalars.allSatisfy { scalar in
-                  if scalar.value < 0x80 {
-                    return (65...90).contains(scalar.value)
-                      || (97...122).contains(scalar.value)
-                      || (48...57).contains(scalar.value)
-                      || scalar.value == 45
-                      || scalar.value == 46
-                  }
-                  switch scalar.properties.generalCategory {
-                  case .lowercaseLetter, .uppercaseLetter, .titlecaseLetter, .modifierLetter,
-                    .otherLetter, .decimalNumber, .letterNumber, .nonspacingMark, .spacingMark:
-                    return true
-                  default:
-                    return false
-                  }
-                }
-              }
-
-              var isValidA_LABELDomain: Bool {
-                guard allSatisfy({ character in
-                  character.isASCII && (character.isLetter || character.isNumber || character == "-" || character == ".")
-                }) else {
-                  return false
-                }
-                return split(separator: ".", omittingEmptySubsequences: false)
-                  .allSatisfy { label in
-                    label.isEmpty == false
-                      && label.first != "-"
-                      && label.last != "-"
-                  }
-              }
-            }
+            \(domainHelpersSource)
 
             """
 
@@ -363,10 +379,24 @@ public enum PublicSuffixGenerator {
     }
 
     private static func canonicalPSLEntry(_ rawValue: String) -> String? {
-        let lowercased = rawValue.lowercased()
+        normalizedDomain(rawValue)
+    }
+
+    /// The generator-side domain normalizer.
+    ///
+    /// Kept in lockstep with the emitted `PublicSuffix.normalizedDomain`; the
+    /// emitted copy of the `String` helpers it relies on is single-sourced from
+    /// `domainHelpersSource`, and the agreement is verified by
+    /// `DomainNormalizerParityTests`.
+    static func normalizedDomain(_ value: String) -> String? {
+        let lowercased = value.lowercased()
         guard lowercased.isEmpty == false, lowercased.hasAllowedDomainScalars else {
             return nil
         }
+        // Deliberately the lenient `URL(string:)`, NOT
+        // `URL(string:encodingInvalidCharacters: false)`: only the lenient
+        // initializer runs Foundation's IDNA, converting a U-label suffix to its
+        // A-label. `isValidA_LABELDomain` then re-checks the result is ASCII LDH.
         guard
             let url = URL(string: "https://\(lowercased)"),
             let host = url.host(percentEncoded: false)?.lowercased(),

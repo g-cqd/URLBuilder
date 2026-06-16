@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A type that converts to a single `URLQueryValue` (the right-hand side of
 /// a `key=value` query item).
@@ -93,6 +93,13 @@ extension Double: URLQueryValueConvertible {
 
 extension Float: URLQueryValueConvertible {
     public var urlQueryValue: URLQueryValue { .value(String(self)) }
+}
+
+extension Decimal: URLQueryValueConvertible {
+    /// Renders the decimal via its base-10 `description`, preserving the exact
+    /// scale (trailing zeros) and avoiding the binary-float rounding that the
+    /// generic `Encodable`/JSON path introduces.
+    public var urlQueryValue: URLQueryValue { .value(description) }
 }
 
 extension UUID: URLQueryValueConvertible {

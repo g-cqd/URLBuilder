@@ -1,3 +1,4 @@
+import SwiftDiagnostics
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosGenericTestSupport

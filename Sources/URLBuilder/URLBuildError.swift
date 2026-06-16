@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Validation failures for URL declarations.
 public enum URLBuildError: Error, Equatable, Sendable, CustomStringConvertible {
@@ -103,4 +103,9 @@ public enum URLBuildError: Error, Equatable, Sendable, CustomStringConvertible {
                 "Host \(host) does not end with a known public suffix (last label: \(label))."
         }
     }
+}
+
+extension URLBuildError: LocalizedError {
+    /// Forwards to ``description`` so a bridged `localizedDescription` carries the same message.
+    public var errorDescription: String? { description }
 }

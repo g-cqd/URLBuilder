@@ -1,10 +1,15 @@
-.DS_Store
+# Swift Package Manager / Xcode
 .build/
 .swiftpm/
-DerivedData/
+.index-build/
 *.xcodeproj
+*.xcworkspace
+*.xcscmblueprint
 Package.resolved
-.vscode
+DerivedData/
+.derivedData/
+xcuserdata/
+*.xcuserstate
 
 # Stray build artifacts emitted to the repo root
 *.o
@@ -12,13 +17,22 @@ Package.resolved
 *.dia
 *.swiftdeps
 
-# Xcode / simulator
-xcuserdata/
-*.xcworkspace
-*.xcscmblueprint
+# DocC / Pages build output
+_site/
+*.doccarchive
 
-# Instruments / profiling
+# Code coverage / profiling
+*.profraw
+*.profdata
 *.trace
 
-# SPM build cache
-.index-build/
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+._*

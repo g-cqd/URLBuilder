@@ -61,4 +61,18 @@ struct RFC3492PunycodeTests {
         let url = try withThrowingURL { HTTPS("xn--caf-dma", .com) }
         #expect(url.host == "xn--caf-dma.com")
     }
+
+    // RFC 5891 §4 — a COMPLETE Unicode host string (multi-label, passed through
+    // the reg-name path) is accepted and converted to its A-label form. This
+    // pins the deliberate reliance on the lenient `URL(string:)` re-parse in
+    // `URLValidator.validatedHostName`: the stricter
+    // `URL(string:encodingInvalidCharacters: false)` would DISABLE Foundation's
+    // IDNA (U-label → A-label) conversion and reject every internationalized
+    // domain. A future Foundation change at that boundary is caught here.
+    @Test
+    func `RFC 5891 — complete Unicode host is accepted and IDNA-encoded`() throws {
+        let url = try withThrowingURL { HTTPS("münchen.de") }
+        #expect(url.host == "xn--mnchen-3ya.de")
+        #expect(url.absoluteString == "https://xn--mnchen-3ya.de")
+    }
 }

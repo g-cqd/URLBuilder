@@ -111,9 +111,12 @@ validation step into the type system or the build step itself.
 - **F-Query-2.** Repeated names are preserved (`?tag=ios&tag=swift`).
 - **F-Query-3.** A query flag (`?preview`, no `=`) is distinct from an
   empty query value (`?preview=`).
-- **F-Query-4.** Typed query values are encoded through `Encodable`.
-  Scalars (`Bool`/`Int`/`Double`/`Decimal`/`String`) render as plain
-  query values; arrays and objects render as compact JSON values.
+- **F-Query-4.** A query value renders through `URLQueryValueConvertible`
+  when it conforms (`Bool`/`Int`/`Double`/`Decimal`/`String`/`Substring`/
+  `UUID`/`Date`, and `RawRepresentable` over a convertible raw value),
+  producing a plain value — `Decimal` uses its base-10 `description`. Any
+  other `Encodable` value renders as compact JSON (sorted keys, slashes
+  unescaped) via ADJSON.
 - **F-Query-5.** Query deduplication is configurable. `.none` is the
   default and preserves repeated keys. `.firstWins` and `.lastWins`
   collapse repeated keys while keeping the first occurrence's rendered
@@ -171,9 +174,28 @@ validation step into the type system or the build step itself.
   supports the same explicit `URLBuildConfiguration` argument.
 - **F-Macro-2.** `@URLQuery` synthesizes `URLQueryRepresentable`
   conformance for stored properties on structs, classes, and actors.
+  Shape is inferred structurally from each binding's type:
+  - a scalar renders as `Query(key, value)`;
+  - a single optional layer (`T?`) unwraps with `if let` (omitted when nil);
+  - `[T]` / `Array<T>` and `Set<T>` unfold to one query item per element,
+    with `Set` iteration emitted in a deterministic sorted order;
+  - an optional collection (`[T]?`, `Set<T>?`) is unwrapped first, then
+    unfolded.
 - **F-Macro-3.** `@Query(.key("..."))`, `@Query(.flag)`, and
   `@Query(.ignore)` customize `@URLQuery` property rendering without
   generating runtime code by themselves.
+- **F-Macro-4.** `@URLQuery` skips members that are not per-instance query
+  state — `static`/`class` (type-level) and `lazy` storage, and computed
+  properties — while keeping stored properties that have `willSet`/`didSet`
+  observers. Every binding of a multi-binding declaration (`let a, b: Int`)
+  is emitted, with a trailing type annotation propagated to earlier bindings.
+- **F-Macro-5.** Shapes with no canonical query unfold are diagnosed at
+  compile time rather than guessed (fail-fast): a dictionary property, a
+  nested optional (`T??`), and an un-annotated collection literal (which would
+  otherwise silently JSON-encode rather than unfold — an explicit `[T]` /
+  `Set<T>` annotation is required). A keyword-named property (`` let `default` ``)
+  is backtick-escaped in the expansion so it compiles and renders under its
+  bare name.
 
 ---
 

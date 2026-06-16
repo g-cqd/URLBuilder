@@ -1,5 +1,7 @@
 import SwiftDiagnostics
+import SwiftParser
 import SwiftSyntax
+import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
 /// `@URLQuery` synthesizes `URLQueryRepresentable` conformance by reading
@@ -9,8 +11,20 @@ import SwiftSyntaxMacros
 ///   • `@Query(.key("custom_name"))` overrides the rendered key.
 ///   • `@Query(.flag)` renders a `Bool` property as a value-less flag.
 ///   • `@Query(.ignore)` excludes the property from the synthesis.
-public struct URLQueryMacro: ExtensionMacro {
-    public static func expansion(
+///
+/// Shape is inferred structurally from each binding's `TypeSyntax`:
+///   • scalars render as `Query(key, value)`;
+///   • a single optional layer unwraps with `if let`;
+///   • `[T]` / `Array<T>` and `Set<T>` unfold to one item per element
+///     (`Set` sorted for a deterministic URL);
+///   • `static`/`class`/`lazy` storage and computed properties are skipped,
+///     while `willSet`/`didSet` observers are kept.
+///
+/// Shapes that have no canonical unfold are diagnosed rather than guessed:
+/// dictionaries, nested optionals, and an un-annotated collection literal
+/// (which would otherwise silently JSON-encode).
+struct URLQueryMacro: ExtensionMacro {
+    static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
@@ -18,12 +32,12 @@ public struct URLQueryMacro: ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         let memberBlock: MemberBlockSyntax
-        if let s = declaration.as(StructDeclSyntax.self) {
-            memberBlock = s.memberBlock
-        } else if let c = declaration.as(ClassDeclSyntax.self) {
-            memberBlock = c.memberBlock
-        } else if let a = declaration.as(ActorDeclSyntax.self) {
-            memberBlock = a.memberBlock
+        if let structDecl = declaration.as(StructDeclSyntax.self) {
+            memberBlock = structDecl.memberBlock
+        } else if let classDecl = declaration.as(ClassDeclSyntax.self) {
+            memberBlock = classDecl.memberBlock
+        } else if let actorDecl = declaration.as(ActorDeclSyntax.self) {
+            memberBlock = actorDecl.memberBlock
         } else {
             context.diagnose(
                 Diagnostic(
@@ -34,48 +48,65 @@ public struct URLQueryMacro: ExtensionMacro {
             return []
         }
 
-        let storedProperties: [VariableDeclSyntax] = memberBlock.members.compactMap { member in
-            guard let varDecl = member.decl.as(VariableDeclSyntax.self) else { return nil }
-            guard let binding = varDecl.bindings.first else { return nil }
-            // Skip computed properties (they declare an accessor block).
-            if binding.accessorBlock != nil { return nil }
-            return varDecl
-        }
-
         var bodyLines: [String] = []
 
-        for prop in storedProperties {
-            guard let binding = prop.bindings.first,
-                let pattern = binding.pattern.as(IdentifierPatternSyntax.self)
-            else { continue }
-            let propName = pattern.identifier.text
+        for member in memberBlock.members {
+            guard let varDecl = member.decl.as(VariableDeclSyntax.self) else { continue }
 
-            let attribute = Self.parseQueryAttribute(from: prop.attributes, in: context)
+            // M1 — a `static`/`class` member is type-level state, and `lazy` is
+            // computed on first access; neither is per-instance query state.
+            if Self.isTypeLevelOrLazy(varDecl) { continue }
 
-            switch attribute {
-                case .ignore:
+            let attribute = Self.parseQueryAttribute(from: varDecl.attributes, in: context)
+
+            let bindings = Array(varDecl.bindings)
+            for index in bindings.indices {
+                let binding = bindings[index]
+
+                // M6 — keep stored properties, including those with `willSet`/
+                // `didSet` observers; skip only computed properties.
+                guard Self.isStoredBinding(binding) else { continue }
+                guard let pattern = binding.pattern.as(IdentifierPatternSyntax.self) else {
                     continue
-                case .flag:
-                    bodyLines.append("if \(propName) { Query(\"\(propName)\") }")
-                case .key(let customKey):
-                    bodyLines.append(
-                        Self.emitLine(
-                            propName: propName, key: customKey, type: binding.typeAnnotation?.type)
-                    )
-                case .none:
-                    bodyLines.append(
-                        Self.emitLine(
-                            propName: propName, key: propName, type: binding.typeAnnotation?.type)
-                    )
+                }
+
+                let name = Self.bareIdentifier(pattern.identifier.text)
+                // M7 — a trailing annotation (`let a, b: Int`) types every earlier
+                // binding that has neither its own annotation nor initializer.
+                let resolvedType = Self.resolvedType(at: index, in: bindings)
+
+                switch attribute {
+                    case .ignore:
+                        continue
+                    case .flag:
+                        bodyLines.append(Self.flagLine(name: name))
+                    case .key(let customKey):
+                        if let line = Self.emitLine(
+                            name: name,
+                            key: customKey,
+                            type: resolvedType,
+                            initializer: binding.initializer,
+                            node: binding,
+                            in: context
+                        ) {
+                            bodyLines.append(line)
+                        }
+                    case .none:
+                        if let line = Self.emitLine(
+                            name: name,
+                            key: name,
+                            type: resolvedType,
+                            initializer: binding.initializer,
+                            node: binding,
+                            in: context
+                        ) {
+                            bodyLines.append(line)
+                        }
+                }
             }
         }
 
-        let body: String
-        if bodyLines.isEmpty {
-            body = ""
-        } else {
-            body = bodyLines.joined(separator: "\n    ")
-        }
+        let body = bodyLines.isEmpty ? "" : bodyLines.joined(separator: "\n    ")
 
         let extensionSource: DeclSyntax = """
             extension \(type.trimmed): URLBuilder.URLQueryRepresentable {
@@ -92,29 +123,294 @@ public struct URLQueryMacro: ExtensionMacro {
         return [extDecl]
     }
 
-    /// Emits a single body line for a stored property, choosing the right
-    /// shape based on the syntactic type annotation when one is present.
-    private static func emitLine(propName: String, key: String, type: TypeSyntax?) -> String {
+    /// Emits a single body line for a stored property, choosing the right shape
+    /// from the structural classification of its type annotation.
+    ///
+    /// Returns `nil` when the binding is diagnosed (dictionary, nested optional,
+    /// or an un-annotated collection literal) — fail-fast rather than guessing a
+    /// rendering.
+    private static func emitLine(
+        name: String,
+        key: String,
+        type: TypeSyntax?,
+        initializer: InitializerClauseSyntax?,
+        node: some SyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) -> String? {
+        let keyLiteral = escapedStringLiteral(key)
+        let value = escapedIdentifier(name)
+
         guard let type else {
-            return "Query(\"\(key)\", \(propName))"
+            // M4 — without an annotation a collection literal would route through
+            // the scalar/JSON path (`?tags=[…]`) instead of unfolding. Require an
+            // explicit `[T]` / `Set<T>` annotation so the intent is unambiguous.
+            if let initializer, isCollectionLiteral(initializer.value) {
+                context.diagnose(
+                    Diagnostic(
+                        node: Syntax(node),
+                        message: URLQueryMacroDiagnostic.requiresTypeAnnotation
+                    )
+                )
+                return nil
+            }
+            return "Query(\(keyLiteral), \(value))"
         }
 
-        let typeText = type.trimmedDescription
+        switch classify(type) {
+            case .scalar:
+                return "Query(\(keyLiteral), \(value))"
+            case .array:
+                return "for element in \(value) { Query(\(keyLiteral), element) }"
+            case .set:
+                return setLine(over: value, keyLiteral: keyLiteral)
+            case .optionalScalar:
+                return "if let \(value) { Query(\(keyLiteral), \(value)) }"
+            case .optionalArray:
+                return "if let \(value) { for element in \(value) { Query(\(keyLiteral), element) } }"
+            case .optionalSet:
+                return "if let \(value) { \(setLine(over: value, keyLiteral: keyLiteral)) }"
+            case .dictionary:
+                context.diagnose(
+                    Diagnostic(
+                        node: Syntax(type),
+                        message: URLQueryMacroDiagnostic.unsupportedDictionary
+                    )
+                )
+                return nil
+            case .nestedOptional:
+                context.diagnose(
+                    Diagnostic(
+                        node: Syntax(type),
+                        message: URLQueryMacroDiagnostic.unsupportedNestedOptional
+                    )
+                )
+                return nil
+        }
+    }
 
-        // Optional<T> or T? → if let binding
-        if typeText.hasSuffix("?") || typeText.hasPrefix("Optional<") {
-            return "if let \(propName) { Query(\"\(key)\", \(propName)) }"
+    /// Emits a value-less flag: `if name { Query("name") }`.
+    private static func flagLine(name: String) -> String {
+        "if \(escapedIdentifier(name)) { Query(\(escapedStringLiteral(name))) }"
+    }
+
+    /// Emits a sorted `Set` unfold.
+    ///
+    /// The sort key is each element's `String(describing:)` form, so iteration is
+    /// lexicographic and stable across runs — not numeric (a set of `1, 2, 10`
+    /// renders as `1`, `10`, `2`). Determinism is what matters here (HMAC
+    /// signing, cache keys, snapshot tests), not numeric ordering.
+    private static func setLine(over value: String, keyLiteral: String) -> String {
+        "for element in \(value).sorted(by: { String(describing: $0) < String(describing: $1) }) "
+            + "{ Query(\(keyLiteral), element) }"
+    }
+
+    // MARK: - Structural classification
+
+    private enum Classification {
+        case scalar
+        case array
+        case set
+        case optionalScalar
+        case optionalArray
+        case optionalSet
+        case dictionary
+        case nestedOptional
+    }
+
+    private enum CoreKind {
+        case scalar
+        case array
+        case set
+        case dictionary
+    }
+
+    /// Classifies a binding's type into an emission shape.
+    ///
+    /// At most one optional layer is peeled; a second layer (`Int??`) is reported
+    /// as `nestedOptional` for diagnosis. The classification is flat — no
+    /// recursion — because the supported shapes are at most one optional wrapping
+    /// one collection.
+    private static func classify(_ type: TypeSyntax) -> Classification {
+        if let inner = optionalInner(type) {
+            if optionalInner(inner) != nil {
+                return .nestedOptional
+            }
+            switch coreKind(inner) {
+                case .scalar: return .optionalScalar
+                case .array: return .optionalArray
+                case .set: return .optionalSet
+                case .dictionary: return .dictionary
+            }
         }
 
-        // [T] or Array<T> or Set<T> → for-loop emitting one item per element
-        if typeText.hasPrefix("[")
-            || typeText.hasPrefix("Array<")
-            || typeText.hasPrefix("Set<")
-        {
-            return "for element in \(propName) { Query(\"\(key)\", element) }"
+        switch coreKind(type) {
+            case .scalar: return .scalar
+            case .array: return .array
+            case .set: return .set
+            case .dictionary: return .dictionary
         }
+    }
 
-        return "Query(\"\(key)\", \(propName))"
+    /// Returns the wrapped type when `type` is `T?` or `Optional<T>`.
+    private static func optionalInner(_ type: TypeSyntax) -> TypeSyntax? {
+        if let optional = type.as(OptionalTypeSyntax.self) {
+            return optional.wrappedType
+        }
+        if let identifier = type.as(IdentifierTypeSyntax.self), identifier.name.text == "Optional" {
+            return firstGenericArgument(of: identifier)
+        }
+        return nil
+    }
+
+    /// Classifies a non-optional type as a scalar, array, set, or dictionary.
+    private static func coreKind(_ type: TypeSyntax) -> CoreKind {
+        if type.is(ArrayTypeSyntax.self) {
+            return .array
+        }
+        if type.is(DictionaryTypeSyntax.self) {
+            return .dictionary
+        }
+        if let identifier = type.as(IdentifierTypeSyntax.self) {
+            switch identifier.name.text {
+                case "Array": return .array
+                case "Set": return .set
+                case "Dictionary": return .dictionary
+                default: return .scalar
+            }
+        }
+        return .scalar
+    }
+
+    /// Extracts the first generic argument type (`Optional<T>` → `T`).
+    private static func firstGenericArgument(of identifier: IdentifierTypeSyntax) -> TypeSyntax? {
+        guard let argument = identifier.genericArgumentClause?.arguments.first else {
+            return nil
+        }
+        if case .type(let type) = argument.argument {
+            return type
+        }
+        return nil
+    }
+
+    /// Whether an initializer expression is an array or dictionary literal.
+    private static func isCollectionLiteral(_ expression: ExprSyntax) -> Bool {
+        expression.is(ArrayExprSyntax.self) || expression.is(DictionaryExprSyntax.self)
+    }
+
+    // MARK: - Binding inspection
+
+    /// Whether the declaration is `static`/`class` (type-level) or `lazy`.
+    private static func isTypeLevelOrLazy(_ varDecl: VariableDeclSyntax) -> Bool {
+        varDecl.modifiers.contains { modifier in
+            switch modifier.name.tokenKind {
+                case .keyword(.static), .keyword(.class), .keyword(.lazy):
+                    return true
+                default:
+                    return false
+            }
+        }
+    }
+
+    /// Whether a binding is stored.
+    ///
+    /// A binding with no accessor block is stored. A binding whose accessors are
+    /// only `willSet`/`didSet` observers is still stored; any `get`/`_read`/
+    /// `_modify`/address accessor (or a single-expression getter) is computed.
+    private static func isStoredBinding(_ binding: PatternBindingSyntax) -> Bool {
+        guard let accessorBlock = binding.accessorBlock else {
+            return true
+        }
+        switch accessorBlock.accessors {
+            case .getter:
+                return false
+            case .accessors(let accessors):
+                return accessors.allSatisfy { accessor in
+                    switch accessor.accessorSpecifier.tokenKind {
+                        case .keyword(.didSet), .keyword(.willSet):
+                            return true
+                        default:
+                            return false
+                    }
+                }
+        }
+    }
+
+    /// Resolves a binding's effective type, propagating a shared trailing
+    /// annotation (`let a, b: Int`) to earlier bindings that have neither their
+    /// own annotation nor their own initializer.
+    private static func resolvedType(
+        at index: Int,
+        in bindings: [PatternBindingSyntax]
+    ) -> TypeSyntax? {
+        if let own = bindings[index].typeAnnotation?.type {
+            return own
+        }
+        // A binding with its own initializer is independently typed and does not
+        // borrow a later binding's trailing annotation.
+        if bindings[index].initializer != nil {
+            return nil
+        }
+        var cursor = index + 1
+        while cursor < bindings.count {
+            if let type = bindings[cursor].typeAnnotation?.type {
+                return type
+            }
+            if bindings[cursor].initializer != nil {
+                return nil
+            }
+            cursor += 1
+        }
+        return nil
+    }
+
+    // MARK: - Identifier and literal rendering
+
+    /// Strips surrounding backticks from a raw identifier token's text.
+    private static func bareIdentifier(_ text: String) -> String {
+        if text.count >= 2, text.hasPrefix("`"), text.hasSuffix("`") {
+            return String(text.dropFirst().dropLast())
+        }
+        return text
+    }
+
+    /// Backtick-escapes a value reference when the property name is a keyword
+    /// (M2), so `let \`default\`` references compile as `Query("default", \`default\`)`.
+    private static func escapedIdentifier(_ name: String) -> String {
+        swiftKeywords.contains(name) ? "`\(name)`" : name
+    }
+
+    /// Swift reserved words that require backticks when used as an identifier.
+    private static let swiftKeywords: Set<String> = [
+        "as", "associatedtype", "break", "case", "catch", "class", "continue",
+        "default", "defer", "deinit", "do", "else", "enum", "extension",
+        "fallthrough", "false", "fileprivate", "for", "func", "guard", "if",
+        "import", "in", "init", "inout", "internal", "is", "let", "nil",
+        "operator", "private", "protocol", "public", "repeat", "rethrows",
+        "return", "self", "static", "struct", "subscript", "super", "switch",
+        "throw", "throws", "true", "try", "typealias", "var", "where", "while",
+        "Any", "Self",
+    ]
+
+    /// Renders `value` as a quoted Swift string literal, escaping characters
+    /// that would otherwise corrupt the generated source.
+    ///
+    /// This keeps a `.key("…")` containing `"`, `\`, or `\(` from breaking or
+    /// changing the meaning of the expanded `Query(...)` call.
+    private static func escapedStringLiteral(_ value: String) -> String {
+        var out = "\""
+        for scalar in value.unicodeScalars {
+            switch scalar {
+                case "\\": out += "\\\\"
+                case "\"": out += "\\\""
+                case "\n": out += "\\n"
+                case "\r": out += "\\r"
+                case "\t": out += "\\t"
+                case "\u{0}": out += "\\0"
+                default: out.unicodeScalars.append(scalar)
+            }
+        }
+        out += "\""
+        return out
     }
 
     /// Parses a `@Query(.key("…"))`, `@Query(.flag)`, or `@Query(.ignore)`
@@ -155,10 +451,12 @@ public struct URLQueryMacro: ExtensionMacro {
                 memberAccess.declName.baseName.text == "key",
                 let stringArg = funcCall.arguments.first,
                 let stringLit = stringArg.expression.as(StringLiteralExprSyntax.self),
-                let segment = stringLit.segments.first?.as(StringSegmentSyntax.self),
-                stringLit.segments.count == 1
+                stringLit.segments.count == 1,
+                // The decoded literal value (escapes resolved); `nil` for an
+                // interpolated key, which is then rejected as malformed below.
+                let keyValue = stringLit.representedLiteralValue
             {
-                return .key(segment.content.text)
+                return .key(keyValue)
             }
 
             context.diagnose(
@@ -182,6 +480,9 @@ internal enum QueryAttributeKind {
 internal enum URLQueryMacroDiagnostic: String, DiagnosticMessage {
     case unsupportedDeclaration
     case malformedQueryAttribute
+    case unsupportedDictionary
+    case requiresTypeAnnotation
+    case unsupportedNestedOptional
 
     var diagnosticID: MessageID {
         MessageID(domain: "URLBuilderMacros.URLQuery", id: rawValue)
@@ -196,6 +497,20 @@ internal enum URLQueryMacroDiagnostic: String, DiagnosticMessage {
             case .malformedQueryAttribute:
                 return
                     "@Query expects one of `.key(\"…\")`, `.flag`, or `.ignore` as its argument."
+            case .unsupportedDictionary:
+                return
+                    "@URLQuery does not support dictionary properties — a dictionary has no canonical "
+                    + "query unfold. Encode it explicitly with a custom URLQueryRepresentable, or "
+                    + "exclude it with @Query(.ignore)."
+            case .requiresTypeAnnotation:
+                return
+                    "@URLQuery needs an explicit type annotation on a collection property (e.g. "
+                    + "`let tags: [String]`) so it can unfold to repeated query items instead of "
+                    + "encoding the literal."
+            case .unsupportedNestedOptional:
+                return
+                    "@URLQuery does not support nested optionals — flatten to a single optional, or "
+                    + "exclude it with @Query(.ignore)."
         }
     }
 }

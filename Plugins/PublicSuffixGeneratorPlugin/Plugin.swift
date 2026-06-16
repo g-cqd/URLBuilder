@@ -1,11 +1,12 @@
 import Foundation
 import PackagePlugin
 
-/// Build-tool plugin that regenerates `PublicSuffix.swift` from the.
+/// Build-tool plugin that regenerates `PublicSuffix.swift` before compiling.
 ///
-/// vendored IANA Root Zone Database and Mozilla Public Suffix List
-/// before `URLBuilder` compiles. The command's inputs and outputs are
-/// declared so SwiftPM only re-runs it when the upstream files change.
+/// It runs the generator over the vendored IANA Root Zone Database and Mozilla
+/// Public Suffix List before `URLBuilder` builds. The command's inputs and
+/// outputs are declared so SwiftPM only re-runs it when the upstream files
+/// change.
 @main
 struct PublicSuffixGeneratorPlugin: BuildToolPlugin {
     private enum PluginError: Error, CustomStringConvertible {
