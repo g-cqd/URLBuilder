@@ -1,3 +1,4 @@
+import ADFCore
 import Foundation
 
 #if canImport(Darwin)

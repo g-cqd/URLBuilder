@@ -1,3 +1,4 @@
+import ADFMacroSupport
 import SwiftDiagnostics
 import SwiftParser
 import SwiftSyntax
@@ -137,7 +138,7 @@ struct URLQueryMacro: ExtensionMacro {
         node: some SyntaxProtocol,
         in context: some MacroExpansionContext
     ) -> String? {
-        let keyLiteral = escapedStringLiteral(key)
+        let keyLiteral = swiftStringLiteral(key)
         let value = escapedIdentifier(name)
 
         guard let type else {
@@ -190,7 +191,7 @@ struct URLQueryMacro: ExtensionMacro {
 
     /// Emits a value-less flag: `if name { Query("name") }`.
     private static func flagLine(name: String) -> String {
-        "if \(escapedIdentifier(name)) { Query(\(escapedStringLiteral(name))) }"
+        "if \(escapedIdentifier(name)) { Query(\(swiftStringLiteral(name))) }"
     }
 
     /// Emits a sorted `Set` unfold.
@@ -371,46 +372,6 @@ struct URLQueryMacro: ExtensionMacro {
             return String(text.dropFirst().dropLast())
         }
         return text
-    }
-
-    /// Backtick-escapes a value reference when the property name is a keyword
-    /// (M2), so `let \`default\`` references compile as `Query("default", \`default\`)`.
-    private static func escapedIdentifier(_ name: String) -> String {
-        swiftKeywords.contains(name) ? "`\(name)`" : name
-    }
-
-    /// Swift reserved words that require backticks when used as an identifier.
-    private static let swiftKeywords: Set<String> = [
-        "as", "associatedtype", "break", "case", "catch", "class", "continue",
-        "default", "defer", "deinit", "do", "else", "enum", "extension",
-        "fallthrough", "false", "fileprivate", "for", "func", "guard", "if",
-        "import", "in", "init", "inout", "internal", "is", "let", "nil",
-        "operator", "private", "protocol", "public", "repeat", "rethrows",
-        "return", "self", "static", "struct", "subscript", "super", "switch",
-        "throw", "throws", "true", "try", "typealias", "var", "where", "while",
-        "Any", "Self",
-    ]
-
-    /// Renders `value` as a quoted Swift string literal, escaping characters
-    /// that would otherwise corrupt the generated source.
-    ///
-    /// This keeps a `.key("…")` containing `"`, `\`, or `\(` from breaking or
-    /// changing the meaning of the expanded `Query(...)` call.
-    private static func escapedStringLiteral(_ value: String) -> String {
-        var out = "\""
-        for scalar in value.unicodeScalars {
-            switch scalar {
-                case "\\": out += "\\\\"
-                case "\"": out += "\\\""
-                case "\n": out += "\\n"
-                case "\r": out += "\\r"
-                case "\t": out += "\\t"
-                case "\u{0}": out += "\\0"
-                default: out.unicodeScalars.append(scalar)
-            }
-        }
-        out += "\""
-        return out
     }
 
     /// Parses a `@Query(.key("…"))`, `@Query(.flag)`, or `@Query(.ignore)`

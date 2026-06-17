@@ -35,30 +35,32 @@ let testSettings: [SwiftSetting] =
 // command plugins carry no external dependencies, so they are always available without the flag.
 let isDev = Context.environment["URLBUILDER_DEV"] != nil
 
-// ADJSON dependency. JSON encoding for `Encodable` query values routes through ADJSON (sorted keys,
-// unescaped slashes, Foundation-free core).
-//
-// Default: the published `main` branch. While it is branch-pinned, a tagged URLBuilder release
-// cannot itself be resolved via `.package(url:from:)` (SwiftPM forbids a versioned package
-// depending on an unversioned one).
-//
-// Local development: set `URLBUILDER_LOCAL_ADJSON` to depend on a local checkout instead, so
-// URLBuilder and ADJSON can be iterated together —
-//   • `URLBUILDER_LOCAL_ADJSON=1`            → the sibling `../ADJSON`
-//   • `URLBUILDER_LOCAL_ADJSON=/path/to/ADJSON` → a custom path
-// This is intentionally separate from `URLBUILDER_DEV` so the DocC / lint tooling never requires an
-// ADJSON checkout (and CI's docs job, which sets `URLBUILDER_DEV=1`, keeps resolving the remote).
+// First-party dependencies resolve from a published `main` branch by default, or from a local
+// checkout when the matching PATH env var is set — an absolute or relative path of the caller's
+// choice, so the checkouts need not be co-located. There is no hardcoded relative default.
+//   • `ADJSON_PATH`       → ADJSON (JSON encoding for `Encodable` query values: sorted keys,
+//                           unescaped slashes, Foundation-free core)
+//   • `ADFOUNDATION_PATH` → ADFoundation (`ADFCore` ASCII / byte primitives)
+// (Branch-pinned, so a tagged URLBuilder release cannot itself be resolved via
+// `.package(url:from:)` — SwiftPM forbids a versioned package depending on an unversioned one.)
 let adjsonDependency: Package.Dependency = {
-    guard let local = Context.environment["URLBUILDER_LOCAL_ADJSON"] else {
-        return .package(url: "https://github.com/g-cqd/ADJSON.git", branch: "main")
+    if let path = Context.environment["ADJSON_PATH"], !path.isEmpty {
+        return .package(path: path)
     }
-    let path = (local.isEmpty || local == "1") ? "../ADJSON" : local
-    return .package(path: path)
+    return .package(url: "https://github.com/g-cqd/ADJSON.git", branch: "main")
+}()
+
+let adfoundationDependency: Package.Dependency = {
+    if let path = Context.environment["ADFOUNDATION_PATH"], !path.isEmpty {
+        return .package(path: path)
+    }
+    return .package(url: "https://github.com/g-cqd/ADFoundation.git", branch: "main")
 }()
 
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0"),
     adjsonDependency,
+    adfoundationDependency,
 ]
 if isDev {
     packageDependencies.append(
@@ -96,6 +98,7 @@ let package = Package(
             dependencies: [
                 "URLBuilderMacros",
                 .product(name: "ADJSON", package: "ADJSON"),
+                .product(name: "ADFCore", package: "ADFoundation"),
             ],
             swiftSettings: strictSettings,
             plugins: libraryBuildPlugins
@@ -109,6 +112,7 @@ let package = Package(
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
                 .product(name: "SwiftDiagnostics", package: "swift-syntax"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "ADFMacroSupport", package: "ADFoundation"),
             ],
             swiftSettings: strictSettings
         ),
