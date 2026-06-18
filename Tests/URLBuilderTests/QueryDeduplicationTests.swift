@@ -126,7 +126,7 @@ struct QueryDeduplicationTests {
         arguments: [
             URLBuildConfiguration.QueryDeduplication.none,
             URLBuildConfiguration.QueryDeduplication.firstWins,
-            URLBuildConfiguration.QueryDeduplication.lastWins,
+            URLBuildConfiguration.QueryDeduplication.lastWins
         ]
     )
     func `single-occurrence keys are unchanged across policies`(
@@ -192,7 +192,7 @@ struct QueryDeduplicationTests {
         for policy in [
             URLBuildConfiguration.QueryDeduplication.none,
             .firstWins,
-            .lastWins,
+            .lastWins
         ] as [URLBuildConfiguration.QueryDeduplication] {
             let url = try withThrowingURL(configuration: .default.queryDeduplication(policy)) {
                 HTTPS("example.com") {

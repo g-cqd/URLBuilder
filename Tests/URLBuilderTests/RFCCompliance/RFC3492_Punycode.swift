@@ -24,7 +24,7 @@ struct RFC3492PunycodeTests {
             ("bücher", "xn--bcher-kva"),
             ("café", "xn--caf-dma"),
             ("пример", "xn--e1afmkfd"),
-            ("中国", "xn--fiqs8s"),
+            ("中国", "xn--fiqs8s")
         ])
     func `RFC 3492 — U-label round-trips through known A-label encoding`(
         input: String, expected: String

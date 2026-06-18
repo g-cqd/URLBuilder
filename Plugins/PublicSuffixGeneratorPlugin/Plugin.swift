@@ -38,7 +38,7 @@ struct PublicSuffixGeneratorPlugin: BuildToolPlugin {
                 arguments: [
                     ianaFile.path(percentEncoded: false),
                     pslFile.path(percentEncoded: false),
-                    outputFile.path(percentEncoded: false),
+                    outputFile.path(percentEncoded: false)
                 ],
                 inputFiles: [ianaFile, pslFile],
                 outputFiles: [outputFile]

@@ -116,7 +116,7 @@ struct QueryEncodingModeTests {
             (")", "%29"),
             (",", "%2C"),
             (";", "%3B"),
-            ("~", "%7E"),
+            ("~", "%7E")
         ]
     )
     func `WHATWG URL §5.2 (.formURLEncoded) — sub-delims and reserved chars are percent-encoded`(
@@ -135,7 +135,7 @@ struct QueryEncodingModeTests {
             // U+1F4A9 PILE OF POO — UTF-8 0xF0 0x9F 0x92 0xA9
             ("\u{1F4A9}", "%F0%9F%92%A9"),
             // U+4E2D CJK UNIFIED IDEOGRAPH-4E2D — UTF-8 0xE4 0xB8 0xAD
-            ("中", "%E4%B8%AD"),
+            ("中", "%E4%B8%AD")
         ]
     )
     func `RFC 3629 §3 + WHATWG URL §5.2 — non-ASCII is encoded from its UTF-8 byte sequence`(
@@ -151,7 +151,7 @@ struct QueryEncodingModeTests {
         arguments: [
             "abcXYZ0189",  // ALPHA / DIGIT
             "*-._",  // form-encoded pass-through punctuation
-            "abc-DEF.ghi_jkl",  // mixed
+            "abc-DEF.ghi_jkl"  // mixed
         ]
     )
     func `WHATWG URL §5.2 (.formURLEncoded) — pass-through bytes are unencoded`(_ raw: String)

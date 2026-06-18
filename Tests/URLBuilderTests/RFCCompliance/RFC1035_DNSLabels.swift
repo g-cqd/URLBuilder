@@ -48,7 +48,7 @@ struct RFC1035DNSLabelsTests {
     // RFC 3986 §3.2.2 piggy-backs the same limit through `validatedHostName`.
     @Test
     func `RFC 1035 §2.3.4 — rejects host longer than 253 octets`() {
-        let labels = (0..<5).map { _ in String(repeating: "a", count: 50) }
+        let labels = (0 ..< 5).map { _ in String(repeating: "a", count: 50) }
         let big = labels.joined(separator: ".") + ".com"
         #expect(big.utf8.count > 253)
         #expect(throws: (any Error).self) {
@@ -62,7 +62,7 @@ struct RFC1035DNSLabelsTests {
             String(repeating: "a", count: 63),
             String(repeating: "b", count: 63),
             String(repeating: "c", count: 63),
-            String(repeating: "d", count: 61),
+            String(repeating: "d", count: 61)
         ]
         let host = labels.joined(separator: ".")
         #expect(host.utf8.count == 253)

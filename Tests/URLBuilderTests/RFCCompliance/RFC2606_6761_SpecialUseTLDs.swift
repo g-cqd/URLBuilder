@@ -30,7 +30,7 @@ struct SpecialUseTLDTests {
             ("foo", TopLevelDomain("test"), "https://foo.test"),
             ("foo", TopLevelDomain("example"), "https://foo.example"),
             ("foo", TopLevelDomain("invalid"), "https://foo.invalid"),
-            ("foo", TopLevelDomain("localhost"), "https://foo.localhost"),
+            ("foo", TopLevelDomain("localhost"), "https://foo.localhost")
         ])
     func `RFC 2606 §2 — accepts reserved TLDs as well-formed hosts`(
         domain: String, tld: TopLevelDomain, expected: String

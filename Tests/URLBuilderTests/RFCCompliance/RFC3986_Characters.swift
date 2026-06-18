@@ -97,10 +97,10 @@ struct RFC3986CharactersTests {
         }
         let s = url.absoluteString
         var i = s.startIndex
-        while let pct = s.range(of: "%", range: i..<s.endIndex) {
+        while let pct = s.range(of: "%", range: i ..< s.endIndex) {
             let after = pct.upperBound
             guard s.distance(from: after, to: s.endIndex) >= 2 else { break }
-            let hex = s[after..<s.index(after, offsetBy: 2)]
+            let hex = s[after ..< s.index(after, offsetBy: 2)]
             for ch in hex where ch.isLetter {
                 #expect(ch.isUppercase, "expected uppercase hex; got \(ch) in \(s)")
             }

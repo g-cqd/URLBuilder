@@ -285,7 +285,7 @@ internal enum URLValidator {
             // Non-character codepoints: U+FDD0..U+FDEF and any codepoint whose
             // low 16 bits are 0xFFFE or 0xFFFF (UnicodeData / Unicode Standard
             // §23.7). DISALLOWED per RFC 5892 §2.4.
-            if (0xFDD0...0xFDEF).contains(scalar.value) {
+            if (0xFDD0 ... 0xFDEF).contains(scalar.value) {
                 throw .invalidHost(rawHost)
             }
             let low16 = scalar.value & 0xFFFF
@@ -337,7 +337,7 @@ internal enum URLValidator {
         }
 
         return parts.contains { part in
-            guard let value = Int(part), (0...255).contains(value) else {
+            guard let value = Int(part), (0 ... 255).contains(value) else {
                 return true
             }
 

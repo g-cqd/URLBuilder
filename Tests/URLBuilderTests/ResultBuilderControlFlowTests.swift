@@ -346,10 +346,8 @@ struct ResultBuilderControlFlowTests {
 
             @URLQueryBuilder
             var urlQuery: [Query] {
-                for (index, label) in labels.enumerated() {
-                    if onlyEvenIndex && index % 2 == 0 {
-                        Query("label", label)
-                    }
+                for (index, label) in labels.enumerated() where onlyEvenIndex && index % 2 == 0 {
+                    Query("label", label)
                 }
             }
         }

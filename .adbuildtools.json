@@ -1,0 +1,6 @@
+{
+    "devEnv": "URLBUILDER_DEV",
+    "shippedTargets": ["Sources/URLBuilder"],
+    "strtodBan": false,
+    "forceUnwrapBan": true
+}

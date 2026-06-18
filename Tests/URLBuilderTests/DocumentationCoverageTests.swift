@@ -42,7 +42,7 @@ struct DocumentationCoverageTests {
                 continue
             }
             let source = try String(contentsOf: fileURL, encoding: .utf8)
-            let range = NSRange(source.startIndex..<source.endIndex, in: source)
+            let range = NSRange(source.startIndex ..< source.endIndex, in: source)
             for match in testNameRegex.matches(in: source, range: range) {
                 let capturedRange =
                     match.range(at: 1).location == NSNotFound
@@ -94,13 +94,14 @@ struct DocumentationCoverageTests {
     }
 
     private func codeSpans(in text: String, regex: NSRegularExpression) -> [String] {
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        return regex.matches(in: text, range: range).compactMap { match in
-            guard let tokenRange = Range(match.range(at: 1), in: text) else {
-                return nil
+        let range = NSRange(text.startIndex ..< text.endIndex, in: text)
+        return regex.matches(in: text, range: range)
+            .compactMap { match in
+                guard let tokenRange = Range(match.range(at: 1), in: text) else {
+                    return nil
+                }
+                return String(text[tokenRange])
             }
-            return String(text[tokenRange])
-        }
     }
 
     private func markdownTableCells(in line: String) -> [String] {

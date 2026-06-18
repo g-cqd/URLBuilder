@@ -112,7 +112,7 @@ struct SecurityHighSeverityTests {
         arguments: [
             "evil.com\r\nX-Injected: 1",
             "evil.com\nx",
-            "evil\tcom",
+            "evil\tcom"
         ])
     func `rejects C0 controls in host string`(host: String) {
         #expect(throws: (any Error).self) {

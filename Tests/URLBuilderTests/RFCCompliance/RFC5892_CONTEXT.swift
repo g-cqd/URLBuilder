@@ -48,7 +48,7 @@ struct RFC5892ContextTests {
         arguments: [
             "foo\u{00B7}bar",
             "foo\u{0375}bar",
-            "foo\u{30FB}bar",
+            "foo\u{30FB}bar"
         ])
     func `§2.3 — rejects CONTEXTO codepoint outside its script context`(label: String) {
         #expect(throws: (any Error).self) {

@@ -23,7 +23,7 @@ struct RFC3986SchemeTests {
             ("HTTPS", "https"),
             ("foo+bar.1", "foo+bar.1"),
             ("x-y.z+1", "x-y.z+1"),
-            ("MyApp", "myapp"),
+            ("MyApp", "myapp")
         ])
     func `accepts and lowercases valid schemes`(input: String, normalized: String) throws {
         let url = try withThrowingURL {

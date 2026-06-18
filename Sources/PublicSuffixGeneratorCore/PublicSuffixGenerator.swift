@@ -39,9 +39,12 @@ public enum PublicSuffixGenerator {
     public static func parseIANA(_ source: String) -> IANACatalogue {
         var version = ""
         var tlds: Set<String> = []
-        for (index, line) in source.split(
-            omittingEmptySubsequences: false, whereSeparator: \.isNewline
-        ).enumerated() {
+        for (index, line)
+            in source.split(
+                omittingEmptySubsequences: false, whereSeparator: \.isNewline
+            )
+            .enumerated()
+        {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if index == 0 {
                 version =
@@ -367,7 +370,7 @@ public enum PublicSuffixGenerator {
         "operator", "private", "protocol", "public", "repeat", "rethrows",
         "return", "self", "static", "struct", "subscript", "super", "switch",
         "throw", "throws", "true", "try", "typealias", "var", "where", "while",
-        "Any", "Self",
+        "Any", "Self"
     ]
 
     private static func canonicalIANAEntry(_ rawValue: String) -> String? {
@@ -429,9 +432,9 @@ extension String {
     fileprivate var hasAllowedDomainScalars: Bool {
         unicodeScalars.allSatisfy { scalar in
             if scalar.value < 0x80 {
-                return (65...90).contains(scalar.value)
-                    || (97...122).contains(scalar.value)
-                    || (48...57).contains(scalar.value)
+                return (65 ... 90).contains(scalar.value)
+                    || (97 ... 122).contains(scalar.value)
+                    || (48 ... 57).contains(scalar.value)
                     || scalar.value == 45
                     || scalar.value == 46
             }

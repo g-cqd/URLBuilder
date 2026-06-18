@@ -11,8 +11,9 @@ let strictSettings: [SwiftSetting] = [
     .swiftLanguageMode(.v6),
     .treatAllWarnings(as: .error),
     .enableUpcomingFeature("ExistentialAny"),
+    .enableUpcomingFeature("InferIsolatedConformances"),
     .enableUpcomingFeature("InternalImportsByDefault"),
-    .enableUpcomingFeature("MemberImportVisibility"),
+    .enableUpcomingFeature("MemberImportVisibility")
 ]
 
 // Compile-time type-check timing warnings flag slow expressions / function bodies. They use
@@ -21,7 +22,7 @@ let strictSettings: [SwiftSetting] = [
 let timingWarningFlags: [SwiftSetting] = [
     .unsafeFlags([
         "-Xfrontend", "-warn-long-function-bodies=100",
-        "-Xfrontend", "-warn-long-expression-type-checking=100",
+        "-Xfrontend", "-warn-long-expression-type-checking=100"
     ])
 ]
 
@@ -31,8 +32,8 @@ let testSettings: [SwiftSetting] =
 
 // Dev-only tooling is gated behind `URLBUILDER_DEV` so packages that depend on URLBuilder never
 // resolve it. Contributors and CI set `URLBUILDER_DEV=1` to enable the DocC plugin
-// (`swift package generate-documentation`) and build-time lint enforcement. The `format` / `lint`
-// command plugins carry no external dependencies, so they are always available without the flag.
+// (`swift package generate-documentation`) and the shared ADBuildTools `format` / `lint` / `LintBuild`
+// plugins, which resolve only with the flag set (CI and the git hooks set it).
 let isDev = Context.environment["URLBUILDER_DEV"] != nil
 
 // First-party dependencies resolve from a published `main` branch by default, or from a local
@@ -60,9 +61,17 @@ let adfoundationDependency: Package.Dependency = {
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0"),
     adjsonDependency,
-    adfoundationDependency,
+    adfoundationDependency
 ]
 if isDev {
+    // Shared lint/format tooling (Format/Lint/LintBuild plugins + canonical `.swift-format`). Dev-only,
+    // resolved from a local checkout via `ADBUILDTOOLS_PATH`, otherwise the published `main` branch.
+    if let path = Context.environment["ADBUILDTOOLS_PATH"], !path.isEmpty {
+        packageDependencies.append(.package(path: path))
+    } else {
+        packageDependencies.append(
+            .package(url: "https://github.com/g-cqd/ADBuildTools.git", branch: "main"))
+    }
     packageDependencies.append(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
 }
@@ -70,7 +79,9 @@ if isDev {
 // Build-time formatting enforcement attaches to the library only in dev/CI. A build-tool plugin on
 // a library target would otherwise run for everyone who depends on URLBuilder, so it stays gated.
 let libraryBuildPlugins: [Target.PluginUsage] =
-    isDev ? ["PublicSuffixGeneratorPlugin", "LintBuild"] : ["PublicSuffixGeneratorPlugin"]
+    isDev
+    ? ["PublicSuffixGeneratorPlugin", .plugin(name: "LintBuild", package: "ADBuildTools")]
+    : ["PublicSuffixGeneratorPlugin"]
 
 let package = Package(
     name: "URLBuilder",
@@ -83,7 +94,7 @@ let package = Package(
         .iOS(.v18),
         .tvOS(.v18),
         .watchOS(.v11),
-        .visionOS(.v2),
+        .visionOS(.v2)
     ],
     products: [
         .library(
@@ -98,7 +109,7 @@ let package = Package(
             dependencies: [
                 "URLBuilderMacros",
                 .product(name: "ADJSON", package: "ADJSON"),
-                .product(name: "ADFCore", package: "ADFoundation"),
+                .product(name: "ADFCore", package: "ADFoundation")
             ],
             swiftSettings: strictSettings,
             plugins: libraryBuildPlugins
@@ -112,7 +123,7 @@ let package = Package(
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
                 .product(name: "SwiftDiagnostics", package: "swift-syntax"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
-                .product(name: "ADFMacroSupport", package: "ADFoundation"),
+                .product(name: "ADFMacroSupport", package: "ADFoundation")
             ],
             swiftSettings: strictSettings
         ),
@@ -132,18 +143,7 @@ let package = Package(
                 .target(name: "public-suffix-generator")
             ]
         ),
-        // Developer tooling. The command plugins are dependency-free (they drive the toolchain's
-        // bundled `swift format`), so they impose nothing on packages that depend on URLBuilder.
-        .plugin(
-            name: "Format",
-            capability: .command(
-                intent: .custom(verb: "format", description: "Format Swift sources with swift-format"),
-                permissions: [.writeToPackageDirectory(reason: "Format Swift sources with swift-format")])),
-        .plugin(
-            name: "Lint",
-            capability: .command(
-                intent: .custom(verb: "lint", description: "Check formatting and shipped-library discipline"))),
-        .plugin(name: "LintBuild", capability: .buildTool()),
+        // Format / lint / LintBuild come from the shared ADBuildTools dev dependency.
         .testTarget(
             name: "URLBuilderTests",
             dependencies: ["URLBuilder", "PublicSuffixGeneratorCore"],
@@ -153,7 +153,7 @@ let package = Package(
             name: "URLBuilderMacrosTests",
             dependencies: [
                 "URLBuilderMacros",
-                .product(name: "SwiftSyntaxMacrosGenericTestSupport", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacrosGenericTestSupport", package: "swift-syntax")
             ],
             swiftSettings: testSettings
         ),
@@ -161,6 +161,6 @@ let package = Package(
             name: "PublicSuffixGeneratorTests",
             dependencies: ["PublicSuffixGeneratorCore"],
             swiftSettings: testSettings
-        ),
+        )
     ]
 )

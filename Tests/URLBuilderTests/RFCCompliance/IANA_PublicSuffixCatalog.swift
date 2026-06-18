@@ -45,7 +45,7 @@ struct IANAPublicSuffixCatalogTests {
         ("example.co.uk", "co.uk" as String?),
         ("example.com", "com" as String?),
         ("router.home.arpa", "home.arpa" as String?),
-        ("no-such-tld-zz", nil as String?),
+        ("no-such-tld-zz", nil as String?)
     ])
     func `PublicSuffix.longestMatch — returns longest matching suffix`(
         host: String, expected: String?
@@ -109,7 +109,7 @@ struct TLDChainCompositionTests {
         ("co", "uk", "co.uk"),
         ("com", "au", "com.au"),
         ("ac", "uk", "ac.uk"),
-        ("aichi", "nagoya", "aichi.nagoya"),
+        ("aichi", "nagoya", "aichi.nagoya")
     ])
     func `Two-label chain joins with '.'`(first: String, second: String, expected: String) {
         let chain = TopLevelDomain(first)[dynamicMember: second]
@@ -237,7 +237,7 @@ struct TLDChainCompositionTests {
     // ----- Sanity: chain output is in the PSL where expected -----
 
     @Test(arguments: [
-        "co.uk", "com.au", "ac.uk", "co.jp", "com.br", "co.za",
+        "co.uk", "com.au", "ac.uk", "co.jp", "com.br", "co.za"
     ])
     func `Common chain outputs are present in PublicSuffix.icannSuffixes`(suffix: String) {
         #expect(PublicSuffix.icannSuffixes.contains(suffix))

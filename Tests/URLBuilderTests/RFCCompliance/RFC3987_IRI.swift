@@ -61,7 +61,7 @@ struct RFC3987IRITests {
         "\u{202D}",
         "\u{202E}",
         "\u{2028}",
-        "\u{2029}",
+        "\u{2029}"
     ])
     func `RFC 3987 §4.1 — rejects bidi formatting characters in path/query/fragment`(scalar: String) {
         #expect(throws: URLBuildError.invalidPathSegment("safe\(scalar)path")) {

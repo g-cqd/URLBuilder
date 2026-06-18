@@ -26,7 +26,7 @@ struct DomainNormalizerParityTests {
             "münchen.de", "café.fr", "xn--mnchen-3ya.de", "naïve.org",
             "192.168.1.1", "a-b.c-d.com",
             "co_uk", "ex ample.com", "-bad.com", "bad-.com",
-            "", "a..b", "_dmarc.example.com",
+            "", "a..b", "_dmarc.example.com"
         ])
     func `core and emitted normalizers agree on a fixture`(fixture: String) {
         #expect(

@@ -76,11 +76,13 @@ public struct URLDeclaration: Sendable {
                     // form bytes (turning `+` back into `%2B`, etc.). `formURLEncoded`
                     // has already produced the exact `application/x-www-form-urlencoded`
                     // octets, so they are stored verbatim.
-                    components.percentEncodedQuery = queryItems.map { item in
-                        let encodedName = URLValidator.formURLEncoded(item.name)
-                        guard let value = item.value else { return encodedName }
-                        return "\(encodedName)=\(URLValidator.formURLEncoded(value))"
-                    }.joined(separator: "&")
+                    components.percentEncodedQuery =
+                        queryItems.map { item in
+                            let encodedName = URLValidator.formURLEncoded(item.name)
+                            guard let value = item.value else { return encodedName }
+                            return "\(encodedName)=\(URLValidator.formURLEncoded(value))"
+                        }
+                        .joined(separator: "&")
             }
         }
 
@@ -183,7 +185,7 @@ internal struct URLDeclarationState {
                         }
                         // RFC 6335 §6: TCP/UDP port range is 1..65535. Port 0 is reserved
                         // and MUST NOT be used in URIs (RFC 9110 §4.2.1).
-                        guard (1...65_535).contains(value) else {
+                        guard (1 ... 65_535).contains(value) else {
                             throw .invalidPort(value)
                         }
                         port = value
@@ -368,8 +370,7 @@ internal struct URLDeclarationState {
                 var seen: Set<String> = []
                 var deduped: [URLQueryItem] = []
                 deduped.reserveCapacity(items.count)
-                for item in items {
-                    guard seen.insert(item.name).inserted else { continue }
+                for item in items where seen.insert(item.name).inserted {
                     if let latest = latestByName[item.name] {
                         deduped.append(latest)
                     }
@@ -396,8 +397,9 @@ internal struct URLDeclarationState {
         domain: String,
         tld: TopLevelDomain
     ) throws(URLBuildError) -> String {
-        let tldLabels = tld.rawValue.split(separator: ".", omittingEmptySubsequences: false).map(
-            String.init)
+        let tldLabels = tld.rawValue.split(separator: ".", omittingEmptySubsequences: false)
+            .map(
+                String.init)
         guard let finalTLDLabel = tldLabels.last, finalTLDLabel.isEmpty == false else {
             throw .invalidTopLevelDomain(tld.rawValue)
         }

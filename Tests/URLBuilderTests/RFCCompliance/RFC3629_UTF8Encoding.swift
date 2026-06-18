@@ -38,7 +38,7 @@ struct RFC3629UTF8EncodingTests {
             // U+044F CYRILLIC SMALL LETTER YA — D1 8F
             ("я", "%D1%8F"),
             // U+05D0 HEBREW LETTER ALEF — D7 90
-            ("א", "%D7%90"),
+            ("א", "%D7%90")
         ]
     )
     func `§3 (2-byte) — U+0080..U+07FF encodes to two %HH bytes in path`(
@@ -63,7 +63,7 @@ struct RFC3629UTF8EncodingTests {
             // U+20AC EURO SIGN € — E2 82 AC
             ("€", "%E2%82%AC"),
             // U+2603 SNOWMAN ☃ — E2 98 83
-            ("☃", "%E2%98%83"),
+            ("☃", "%E2%98%83")
         ]
     )
     func `§3 (3-byte) — U+0800..U+FFFF encodes to three %HH bytes in query`(
@@ -88,7 +88,7 @@ struct RFC3629UTF8EncodingTests {
             // U+1F1EB U+1F1F7 FLAG FOR FRANCE 🇫🇷 — F0 9F 87 AB F0 9F 87 B7
             ("\u{1F1EB}\u{1F1F7}", "%F0%9F%87%AB%F0%9F%87%B7"),
             // U+10348 GOTHIC LETTER HWAIR 𐍈 — F0 90 8D 88
-            ("\u{10348}", "%F0%90%8D%88"),
+            ("\u{10348}", "%F0%90%8D%88")
         ]
     )
     func `§3 (4-byte) — supplementary plane encodes to four %HH bytes in fragment`(

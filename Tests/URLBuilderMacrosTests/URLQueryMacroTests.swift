@@ -10,7 +10,7 @@ import Testing
 struct URLQueryMacroTests {
     let macroSpecs: [String: MacroSpec] = [
         "URLQuery": MacroSpec(type: URLQueryMacro.self),
-        "Query": MacroSpec(type: QueryAttributeMacro.self),
+        "Query": MacroSpec(type: QueryAttributeMacro.self)
     ]
 
     @Test

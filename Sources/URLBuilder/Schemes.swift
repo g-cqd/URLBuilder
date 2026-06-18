@@ -33,7 +33,7 @@ public struct HTTPS: Sendable {
             scheme: .https,
             components: [
                 URLComponent(storage: .domain(domain)),
-                URLComponent(storage: .tld(tld)),
+                URLComponent(storage: .tld(tld))
             ] + content()
         )
     }
@@ -72,7 +72,7 @@ public struct HTTP: Sendable {
             scheme: .http,
             components: [
                 URLComponent(storage: .domain(domain)),
-                URLComponent(storage: .tld(tld)),
+                URLComponent(storage: .tld(tld))
             ] + content()
         )
     }
