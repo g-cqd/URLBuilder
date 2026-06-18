@@ -139,6 +139,75 @@ struct URLQueryMacroTests {
         )
     }
 
+    // `.flag` on an optional Bool is still valid: the emitted `if name { … }`
+    // unwraps-and-tests the `Bool?` in one step.
+    @Test
+    func `@Query(.flag) renders optional Bool as flag`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              @Query(.flag) let strict: Bool?
+            }
+            """,
+            """
+            struct Input {
+              let strict: Bool?
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                if strict {
+                    Query("strict")
+                }
+              }
+            }
+            """
+        )
+    }
+
+    // BUG 1 — `.flag` on a non-Bool property previously expanded to
+    // `if page { Query("page") }`, a non-Bool-condition error pointing at
+    // GENERATED code. It must instead be diagnosed at the user's declaration,
+    // and the property must be dropped from the synthesis (no broken line).
+    @Test
+    func `@Query(.flag) on a non-Bool property is diagnosed`() {
+        expandsTo(
+            """
+            @URLQuery
+            struct Input {
+              let q: String
+              @Query(.flag) let page: Int
+            }
+            """,
+            """
+            struct Input {
+              let q: String
+              let page: Int
+            }
+
+            extension Input: URLBuilder.URLQueryRepresentable {
+              @URLQueryBuilder
+              public var urlQuery: [Query] {
+                Query("q", q)
+              }
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message:
+                        "@Query(.flag) requires a Bool property — `.flag` renders a value-less "
+                        + "query item gated on the property's truth value. Use a Bool/Bool? "
+                        + "property, or drop `.flag` to render the value.",
+                    line: 4,
+                    column: 21,
+                    severity: .error
+                )
+            ]
+        )
+    }
+
     @Test
     func `@Query(.ignore) excludes a property from synthesis`() {
         expandsTo(

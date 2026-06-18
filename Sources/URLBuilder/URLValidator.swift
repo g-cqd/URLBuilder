@@ -232,8 +232,18 @@ internal enum URLValidator {
         return set
     }()
 
+    // RFC 3986 §3.2.1 — userinfo = *( unreserved / pct-encoded / sub-delims / ":" ).
+    // The allowed (non-encoded) set is unreserved + sub-delims, so a legitimate
+    // `user!name` is preserved rather than over-encoded to `user%21name`.
+    // `:` is deliberately EXCLUDED: this encoder runs once per subcomponent
+    // (username, password) after the caller has split on the single `:`
+    // separator, so a literal `:` inside a username/password must stay
+    // percent-encoded (`%3A`) to avoid being read as the user:password delimiter.
+    // Sub-delims mirror `ASCII.isSubDelimiter` / `Character.isSubDelimiter`
+    // (the same set `isValidIPvFuture` reuses): `! $ & ' ( ) * + , ; =`.
     private static let userInfoAllowed = CharacterSet(
         charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"
+            + "!$&'()*+,;="
     )
 
     /// Whether `host` is an IPv4 literal, for PSL-enforcement exemption.

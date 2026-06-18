@@ -80,7 +80,20 @@ struct URLQueryMacro: ExtensionMacro {
                     case .ignore:
                         continue
                     case .flag:
-                        bodyLines.append(Self.flagLine(name: name))
+                        // `.flag` renders a value-less item gated on a Bool
+                        // condition (`if name { Query("name") }`). Pairing it
+                        // with a non-Bool property would emit a
+                        // non-Bool-condition error pointing at generated code, so
+                        // diagnose it at the user's declaration instead — matching
+                        // how every other unsupported shape is reported.
+                        if let line = Self.flagLine(
+                            name: name,
+                            type: resolvedType,
+                            node: binding,
+                            in: context
+                        ) {
+                            bodyLines.append(line)
+                        }
                     case .key(let customKey):
                         if let line = Self.emitLine(
                             name: name,
@@ -190,8 +203,41 @@ struct URLQueryMacro: ExtensionMacro {
     }
 
     /// Emits a value-less flag: `if name { Query("name") }`.
-    private static func flagLine(name: String) -> String {
-        "if \(escapedIdentifier(name)) { Query(\(swiftStringLiteral(name))) }"
+    ///
+    /// `.flag` requires a `Bool`/`Bool?` property: the emitted `if name { … }`
+    /// gates the item on a Bool condition. When paired with any other type the
+    /// generated condition would not compile, so the mismatch is diagnosed at the
+    /// user's declaration (returning `nil`) instead of emitting code that fails to
+    /// compile with an error pointing at synthesized source.
+    private static func flagLine(
+        name: String,
+        type: TypeSyntax?,
+        node: some SyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) -> String? {
+        guard let type, isBoolType(type) else {
+            context.diagnose(
+                Diagnostic(
+                    node: Syntax(node),
+                    message: URLQueryMacroDiagnostic.flagRequiresBool
+                )
+            )
+            return nil
+        }
+        return "if \(escapedIdentifier(name)) { Query(\(swiftStringLiteral(name))) }"
+    }
+
+    /// Whether `type` is `Bool` or `Bool?` (one optional layer peeled).
+    ///
+    /// A nested optional (`Bool??`) is rejected: after a single `if name` unwrap
+    /// the condition would still be optional, which is the same non-Bool-condition
+    /// failure `.flag` exists to prevent.
+    private static func isBoolType(_ type: TypeSyntax) -> Bool {
+        let core = optionalInner(type) ?? type
+        guard optionalInner(core) == nil else {
+            return false
+        }
+        return core.as(IdentifierTypeSyntax.self)?.name.text == "Bool"
     }
 
     /// Emits a sorted `Set` unfold.
@@ -444,6 +490,7 @@ internal enum URLQueryMacroDiagnostic: String, DiagnosticMessage {
     case unsupportedDictionary
     case requiresTypeAnnotation
     case unsupportedNestedOptional
+    case flagRequiresBool
 
     var diagnosticID: MessageID {
         MessageID(domain: "URLBuilderMacros.URLQuery", id: rawValue)
@@ -472,6 +519,11 @@ internal enum URLQueryMacroDiagnostic: String, DiagnosticMessage {
                 return
                     "@URLQuery does not support nested optionals — flatten to a single optional, or "
                     + "exclude it with @Query(.ignore)."
+            case .flagRequiresBool:
+                return
+                    "@Query(.flag) requires a Bool property — `.flag` renders a value-less query "
+                    + "item gated on the property's truth value. Use a Bool/Bool? property, or drop "
+                    + "`.flag` to render the value."
         }
     }
 }

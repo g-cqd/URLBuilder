@@ -62,6 +62,17 @@ public struct URLDeclaration: Sendable {
             components.port = port
         }
 
+        // TRUST BOUNDARY — path percent-encoding is delegated to Foundation.
+        // `resolvedPath` *validates* each segment (rejects `.`/`..`, raw/encoded
+        // `/`/`\`, forbidden IRI scalars, and percent-encoded dot-segments) but
+        // does NOT itself percent-encode; the `URLComponents.path` setter performs
+        // the RFC 3986 path encoding. This was confirmed non-injectable: a segment
+        // containing a reserved gen-delim (`?`/`#`), a space, a unicode scalar, or a
+        // bare/invalid `%` is percent-encoded in place (`?`→`%3F`, `#`→`%23`,
+        // ` `→`%20`, `%`→`%25`) and never leaks into `URL.query`/`URL.fragment`.
+        // That delegated behavior is pinned by golden tests in
+        // `RFC3986_Path.swift` ("Foundation path-encoding trust boundary") so a
+        // future Foundation change cannot silently alter the emitted URL.
         components.path = try state.resolvedPath(hasHost: resolvedHost != nil)
 
         let queryItems = try state.queryItems()

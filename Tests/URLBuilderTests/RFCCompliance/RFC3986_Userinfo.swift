@@ -80,6 +80,66 @@ struct RFC3986UserinfoTests {
             url.absoluteString == "https://a%3Ab%40c%2Fd%25:p%3Ass%40%2F%3F@example.com")
     }
 
+    // §3.2.1 — userinfo = *( unreserved / pct-encoded / sub-delims / ":" ).
+    // BUG 2 — the sub-delims `! $ & ' ( ) * + , ; =` are allowed unencoded, so a
+    // legitimate `user!name` is preserved rather than over-encoded to
+    // `user%21name`. The password subcomponent carries sub-delims unencoded too.
+    @Test
+    func `§3.2.1 — sub-delims in userinfo are preserved, not percent-encoded`() throws {
+        let url = try withThrowingURL(configuration: Self.usernameAndPassword) {
+            HTTPS("example.com") {
+                UserInfo(username: "user!name", password: "a$b&c'd(e)f*g+h,i;j=k")
+            }
+        }
+
+        #expect(
+            url.absoluteString
+                == "https://user!name:a$b&c'd(e)f*g+h,i;j=k@example.com")
+    }
+
+    // §3.2.1 — unreserved set stays unencoded alongside sub-delims.
+    @Test
+    func `§3.2.1 — unreserved characters in userinfo stay unencoded`() throws {
+        let url = try withThrowingURL(configuration: Self.usernameOnly) {
+            HTTPS("example.com") {
+                UserInfo(username: "Az09-._~")
+            }
+        }
+
+        #expect(url.absoluteString == "https://Az09-._~@example.com")
+    }
+
+    // §3.2.1 — `:` is the user:password separator; this encoder runs once per
+    // subcomponent, so a literal `:` inside a field MUST stay percent-encoded
+    // (`%3A`) and not be read as the delimiter. `@`, `/`, `?`, `%` likewise stay
+    // encoded — they are gen-delims outside the userinfo sub-delims set.
+    @Test
+    func `§3.2.1 — gen-delims and ':' inside a userinfo field are still encoded`() throws {
+        let url = try withThrowingURL(configuration: Self.usernameAndPassword) {
+            HTTPS("example.com") {
+                UserInfo(username: "a:b@c/d%e?f", password: "x:y")
+            }
+        }
+
+        #expect(
+            url.absoluteString
+                == "https://a%3Ab%40c%2Fd%25e%3Ff:x%3Ay@example.com")
+    }
+
+    // §3.2.1 + RFC 3987 §4.1 — a genuinely-illegal userinfo character (a C0
+    // control) is still rejected even though the allowed set widened to include
+    // sub-delims.
+    @Test
+    func `§3.2.1 — control characters in userinfo are still rejected`() {
+        #expect(throws: URLBuildError.invalidUserInfo) {
+            try withThrowingURL(configuration: Self.usernameAndPassword) {
+                HTTPS("example.com") {
+                    UserInfo(username: "bad\u{0001}name")
+                }
+            }
+        }
+    }
+
     @Test
     func `§3.2.1 — empty username is rejected`() {
         #expect(throws: URLBuildError.invalidUserInfo) {
