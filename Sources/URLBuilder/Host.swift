@@ -8,7 +8,12 @@ import Foundation
 /// hosts via static factories (`Host.subdomain(_:)`, `Host.domain(_:)`,
 /// `Host.topLevelDomain(_:)`, …) or their dot-shorthand forms.
 public struct Host: Sendable {
-    internal let storages: [URLComponent.Storage]
+    // `var` (not `let`) so the `consuming` builder steps can append in place
+    // when the receiver is uniquely owned. The property stays `internal` and the
+    // type stays a value type, so value semantics are unchanged: every `Host` a
+    // caller holds is an independent copy, and the result-builder DSL still
+    // flattens `storages` read-only.
+    internal var storages: [URLComponent.Storage]
 
     /// Sets a complete DNS host name or IPv4 address.
     public init(_ name: String) {
@@ -34,7 +39,13 @@ public struct Host: Sendable {
     /// Adds one subdomain label.
     ///
     /// Multiple declarations preserve order.
-    public func subdomain(_ label: String) -> Host {
+    ///
+    /// `consuming`: a literal fluent chain such as
+    /// `Host.subdomain(a).subdomain(b)…` mutates the uniquely-owned receiver in
+    /// place — each intermediate is a moved temporary — so the chain copies
+    /// O(N) elements total instead of the O(N²) that `storages + [storage]` per
+    /// step incurred.
+    public consuming func subdomain(_ label: String) -> Host {
         appending(.subdomain(label))
     }
 
@@ -48,7 +59,7 @@ public struct Host: Sendable {
     }
 
     /// Adds one unclassified host label.
-    public func label(_ label: String) -> Host {
+    public consuming func label(_ label: String) -> Host {
         appending(.hostLabels([label]))
     }
 
@@ -58,7 +69,7 @@ public struct Host: Sendable {
     }
 
     /// Adds unclassified host labels.
-    public func labels(_ labels: String...) -> Host {
+    public consuming func labels(_ labels: String...) -> Host {
         appending(.hostLabels(labels))
     }
 
@@ -68,7 +79,7 @@ public struct Host: Sendable {
     }
 
     /// Sets the registered domain label.
-    public func domain(_ label: String) -> Host {
+    public consuming func domain(_ label: String) -> Host {
         appending(.domain(label))
     }
 
@@ -78,7 +89,7 @@ public struct Host: Sendable {
     }
 
     /// Sets the top-level domain or public suffix.
-    public func topLevelDomain(_ tld: TopLevelDomain) -> Host {
+    public consuming func topLevelDomain(_ tld: TopLevelDomain) -> Host {
         appending(.tld(tld))
     }
 
@@ -92,7 +103,7 @@ public struct Host: Sendable {
     /// Sets the top-level domain or public suffix.
     ///
     /// Shorthand for `topLevelDomain`.
-    public func tld(_ tld: TopLevelDomain) -> Host {
+    public consuming func tld(_ tld: TopLevelDomain) -> Host {
         topLevelDomain(tld)
     }
 
@@ -121,7 +132,22 @@ public struct Host: Sendable {
         .ipLiteral(literal)
     }
 
-    private func appending(_ storage: URLComponent.Storage) -> Host {
-        Host(storages: storages + [storage])
+    // `consuming` receiver: when it is uniquely owned — a literal `.subdomain`/
+    // `.domain`/`.tld` chain, where each intermediate is a moved temporary —
+    // `append` mutates the existing buffer in place instead of allocating and
+    // copying the whole accumulated array, so the chain copies O(N) elements
+    // total / O(log N) allocations instead of O(N²) / O(N). Value semantics are
+    // preserved: a retained earlier `Host` keeps its buffer shared, so `append`
+    // copy-on-writes before mutating.
+    //
+    // Caveat (Swift ownership): a caller folding into a reused `var`
+    // (`h = h.subdomain(x)` in a loop) keeps the prior value alive across the
+    // call, so the per-step copy returns unless the caller writes
+    // `h = (consume h).subdomain(x)`. This is benign for `Host`: a valid host is
+    // bounded to ~126 labels by the 253-octet DNS limit (`validatedHostName`),
+    // so even the fold case is a small fixed constant, never unbounded-quadratic.
+    private consuming func appending(_ storage: URLComponent.Storage) -> Host {
+        storages.append(storage)
+        return self
     }
 }

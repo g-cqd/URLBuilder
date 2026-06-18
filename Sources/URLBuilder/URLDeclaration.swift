@@ -304,6 +304,9 @@ internal struct URLDeclarationState {
         }
 
         var segments: [String] = []
+        // Each `PathSegment` may hold several values; reserve the exact total so
+        // the validated-segment accumulation is a single allocation.
+        segments.reserveCapacity(pathSegments.reduce(0) { $0 + $1.values.count })
         for component in pathSegments {
             for value in component.values {
                 segments.append(try URLValidator.validatedPathSegment(value))
@@ -322,6 +325,9 @@ internal struct URLDeclarationState {
 
     func queryItems() throws(URLBuildError) -> [URLQueryItem] {
         var items: [URLQueryItem] = []
+        // Each `Query` may carry several items; reserve the exact total so the
+        // validated-item accumulation is a single allocation.
+        items.reserveCapacity(queries.reduce(0) { $0 + $1.items.count })
         for query in queries {
             for item in query.items {
                 guard item.name.isEmpty == false else {
