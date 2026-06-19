@@ -1,4 +1,4 @@
-// swift-tools-version: 6.3
+// swift-tools-version: 6.4
 
 import CompilerPluginSupport
 import PackageDescription
@@ -74,6 +74,15 @@ if isDev {
     }
     packageDependencies.append(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
+    // ADTestKit — the shared AD-family testing architecture (typed oracles/asserts, SeededRNG,
+    // async/time tools). Test-only and dev-gated, so consumers of URLBuilder never resolve it.
+    // Local checkout via `ADTESTKIT_PATH`, otherwise the published `main`.
+    if let path = Context.environment["ADTESTKIT_PATH"], !path.isEmpty {
+        packageDependencies.append(.package(path: path))
+    } else {
+        packageDependencies.append(
+            .package(url: "https://github.com/g-cqd/ADTestKit.git", branch: "main"))
+    }
 }
 
 // Build-time formatting enforcement attaches to the library only in dev/CI. A build-tool plugin on
@@ -146,13 +155,37 @@ let package = Package(
         // Format / lint / LintBuild come from the shared ADBuildTools dev dependency.
         .testTarget(
             name: "URLBuilderTests",
-            dependencies: ["URLBuilder", "PublicSuffixGeneratorCore"],
+            dependencies: [
+                "URLBuilder", "PublicSuffixGeneratorCore",
+                // On a clean build SwiftPM links the `URLBuilderMacros` *-testable* object into this
+                // bundle too (it is only meant to be a compile-time plugin for the `URLBuilder` library);
+                // that object references swift-syntax + the compiler-plugin runtime, so without these
+                // products on the link line the bundle fails with undefined symbols. Linking them here is
+                // a no-op for the macro's own plugin build and keeps clean (CI) builds green.
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "SwiftDiagnostics", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax")
+            ],
             swiftSettings: testSettings
         ),
         .testTarget(
             name: "URLBuilderMacrosTests",
             dependencies: [
                 "URLBuilderMacros",
+                // `@testable import URLBuilderMacros` pulls the whole macro object — its `@main`
+                // `CompilerPlugin.main()` entry and every SwiftSyntax reference — into the test bundle's
+                // link. Those are otherwise only *compile-time* dependencies of the `.macro` target, so on
+                // a clean build the symbols are undefined at link. Mirror the macro target's swift-syntax
+                // product set here so the test bundle links them all (a no-op for the plugin's own build).
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "SwiftDiagnostics", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacrosGenericTestSupport", package: "swift-syntax")
             ],
             swiftSettings: testSettings
@@ -164,3 +197,10 @@ let package = Package(
         )
     ]
 )
+
+if isDev {
+    // Wire the dev-only ADTestKit into the main test target (downstream consumers never see it).
+    if let tests = package.targets.first(where: { $0.name == "URLBuilderTests" }) {
+        tests.dependencies.append(.product(name: "ADTestKit", package: "ADTestKit"))
+    }
+}
