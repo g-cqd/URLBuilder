@@ -12,6 +12,7 @@
 //          outcome so a Foundation regression is caught at build time.
 // =====================================================================
 
+import ADTestKit
 import Foundation
 import Testing
 import URLBuilder
@@ -26,15 +27,20 @@ struct RFC5892ContextTests {
     // no defined context and MUST be rejected.
     @Test
     func `§2.2 — rejects bare ZWNJ in Latin label (no contextual match)`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("foo\u{200C}bar", .com) }
+        } where: { (error: URLBuildError) in
+            // A bare CONTEXTJ codepoint with no contextual match is rejected as an invalid host.
+            if case .invalidHost = error { true } else { false }
         }
     }
 
     @Test
     func `§2.2 — rejects bare ZWJ in Latin label (no contextual match)`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("foo\u{200D}bar", .com) }
+        } where: { (error: URLBuildError) in
+            if case .invalidHost = error { true } else { false }
         }
     }
 
@@ -51,8 +57,10 @@ struct RFC5892ContextTests {
             "foo\u{30FB}bar"
         ])
     func `§2.3 — rejects CONTEXTO codepoint outside its script context`(label: String) {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS(label, .com) }
+        } where: { (error: URLBuildError) in
+            if case .invalidHost = error { true } else { false }
         }
     }
 }

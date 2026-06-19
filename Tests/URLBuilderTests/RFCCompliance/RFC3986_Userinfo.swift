@@ -9,6 +9,7 @@
 //          smuggle userinfo through the host grammar.
 // =====================================================================
 
+import ADTestKit
 import Foundation
 import Testing
 import URLBuilder
@@ -207,7 +208,10 @@ struct RFC3986UserinfoTests {
     // validation rather than interpreted as userinfo.
     @Test
     func `§3.2.1 — composed-host label rejects '@' (security note)`() {
-        #expect(throws: (any Error).self) {
+        // Codify the no-bare-`Error.self` discipline: require the *typed* error and the
+        // exact case, with the offending label echoed (so a different rejection — or a
+        // silent acceptance that smuggles userinfo through the host grammar — fails).
+        expectThrows({
             try withThrowingURL {
                 HTTPS {
                     Host {
@@ -216,6 +220,11 @@ struct RFC3986UserinfoTests {
                     }
                 }
             }
-        }
+        }, where: { (error: URLBuildError) in
+            // The composed host is rejected as a whole (`invalidHost`), not per-label —
+            // the assembled-host validation the comment above describes.
+            guard case .invalidHost(let host) = error else { return false }
+            return host.contains("user@evil")
+        })
     }
 }

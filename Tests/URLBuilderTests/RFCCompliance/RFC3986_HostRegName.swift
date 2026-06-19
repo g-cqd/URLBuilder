@@ -7,6 +7,7 @@
 //          host case normalisation, trailing absolute-root dot.
 // =====================================================================
 
+import ADTestKit
 import Foundation
 import Testing
 import URLBuilder
@@ -31,7 +32,7 @@ struct RFC3986RegNameTests {
     @Test
     func `RFC 1035 §2.3.4 — rejects DNS label longer than 63 characters`() {
         let label = String(repeating: "a", count: 64)
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL {
                 HTTPS {
                     Host {
@@ -40,7 +41,7 @@ struct RFC3986RegNameTests {
                     }
                 }
             }
-        }
+        } where: { (error: URLBuildError) in error == .invalidHostLabel(label) }
     }
 
     // §3.2.2 reg-name allowed characters (effectively IDNA after Foundation).

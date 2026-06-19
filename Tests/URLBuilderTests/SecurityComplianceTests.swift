@@ -9,6 +9,7 @@
 // `Documentation/References/RFCs/`.
 // =====================================================================
 
+import ADTestKit
 import Foundation
 import Testing
 import URLBuilder
@@ -38,15 +39,19 @@ struct SecurityHighSeverityTests {
     // undeclared userinfo — honouring the README guarantee.
     @Test
     func `rejects at-sign in host string`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("attacker@evil.com") }
+        } where: { (error: URLBuildError) in
+            error == .invalidHost("attacker@evil.com")
         }
     }
 
     @Test
     func `rejects userinfo prefix in host string`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("user:pass@evil.com") }
+        } where: { (error: URLBuildError) in
+            error == .invalidHost("user:pass@evil.com")
         }
     }
 
@@ -115,8 +120,12 @@ struct SecurityHighSeverityTests {
             "evil\tcom"
         ])
     func `rejects C0 controls in host string`(host: String) {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS(host) }
+        } where: { (error: URLBuildError) in
+            // CR/LF/TAB in a host is rejected during validation; the rejecting clause (and so
+            // the associated value) varies by control character, so match the case.
+            if case .invalidHost = error { true } else { false }
         }
     }
 
@@ -131,23 +140,27 @@ struct SecurityHighSeverityTests {
     // -------------------------------------------------------------------
     @Test
     func `rejects C0 controls in query name`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL {
                 HTTPS("example.com") {
                     Query("name\r\nX-Injected: 1", "value")
                 }
             }
+        } where: { (error: URLBuildError) in
+            error == .invalidQueryName("name\r\nX-Injected: 1")
         }
     }
 
     @Test
     func `rejects C0 controls in query value`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL {
                 HTTPS("example.com") {
                     Query("name", "value\r\nX-Injected: 1")
                 }
             }
+        } where: { (error: URLBuildError) in
+            error == .invalidQueryValue(name: "name", value: "value\r\nX-Injected: 1")
         }
     }
 
@@ -159,12 +172,14 @@ struct SecurityHighSeverityTests {
     // -------------------------------------------------------------------
     @Test
     func `rejects C0 controls in fragment`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL {
                 HTTPS("example.com") {
                     Fragment("section\r\nX-Injected: 1")
                 }
             }
+        } where: { (error: URLBuildError) in
+            error == .invalidFragment("section\r\nX-Injected: 1")
         }
     }
 }
@@ -186,12 +201,14 @@ struct SecurityMediumSeverityTests {
     @Test(
         arguments: ["%2e%2e", "%2E%2E", "%2e", "%2E", "%2e%2e%2f.."])
     func `rejects percent-encoded dot segments`(segment: String) {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL {
                 HTTPS("example.com") {
                     Path(segment)
                 }
             }
+        } where: { (error: URLBuildError) in
+            error == .invalidPathSegment(segment)
         }
     }
 
@@ -208,12 +225,14 @@ struct SecurityMediumSeverityTests {
     // -------------------------------------------------------------------
     @Test
     func `rejects percent sign inside IPvFuture literal`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL {
                 HTTPS {
                     IPLiteral("v1.a%3Ab")
                 }
             }
+        } where: { (error: URLBuildError) in
+            error == .invalidIPLiteral("v1.a%3Ab")
         }
     }
 

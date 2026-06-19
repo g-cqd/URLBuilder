@@ -12,6 +12,7 @@
 //          browser" refactor would be flagged immediately.
 // =====================================================================
 
+import ADTestKit
 import Foundation
 import Testing
 import URLBuilder
@@ -69,8 +70,11 @@ struct WHATWGURLDivergenceTests {
     @Test
     func `RFC 5892 §2.4 — rejects U+FFFD substitution in host`() {
         // U+FFFD itself is general-category So → DISALLOWED.
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("foo\u{FFFD}bar", .com) }
+        } where: { (error: URLBuildError) in
+            // U+FFFD is general-category So → DISALLOWED → rejected as an invalid host.
+            if case .invalidHost = error { true } else { false }
         }
     }
 }

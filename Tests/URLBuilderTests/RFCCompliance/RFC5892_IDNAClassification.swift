@@ -23,6 +23,7 @@
 // platform divergence is caught at build time.
 // =====================================================================
 
+import ADTestKit
 import Foundation
 import Testing
 import URLBuilder
@@ -55,8 +56,11 @@ struct RFC5892CodepointClassificationTests {
     // instead of rejecting them.
     @Test
     func `§2.4 DISALLOWED — emoji symbol rejected in host label`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("hello\u{1F600}", .com) }
+        } where: { (error: URLBuildError) in
+            // DISALLOWED codepoint rejected by the pre-Foundation general-category check.
+            if case .invalidHost = error { true } else { false }
         }
     }
 
@@ -64,8 +68,10 @@ struct RFC5892CodepointClassificationTests {
     // SIGN are not letters and MUST be rejected.
     @Test
     func `§2.4 DISALLOWED — currency symbol rejected in host label`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("price\u{20AC}", .com) }
+        } where: { (error: URLBuildError) in
+            if case .invalidHost = error { true } else { false }
         }
     }
 
@@ -73,8 +79,10 @@ struct RFC5892CodepointClassificationTests {
     // EQUAL TO are not letters and MUST be rejected.
     @Test
     func `§2.4 DISALLOWED — math symbol rejected in host label`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("a\u{2260}b", .com) }
+        } where: { (error: URLBuildError) in
+            if case .invalidHost = error { true } else { false }
         }
     }
 
@@ -83,8 +91,10 @@ struct RFC5892CodepointClassificationTests {
     // must be rejected.
     @Test
     func `§2.4 DISALLOWED — punctuation/symbol rejected in host label`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("foo\u{2026}bar", .com) }
+        } where: { (error: URLBuildError) in
+            if case .invalidHost = error { true } else { false }
         }
     }
 
@@ -94,8 +104,10 @@ struct RFC5892CodepointClassificationTests {
     // canonical "byte-order mark sentinel" non-character.
     @Test
     func `§2.4 DISALLOWED — non-character codepoint rejected in host label`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("foo\u{FFFE}bar", .com) }
+        } where: { (error: URLBuildError) in
+            if case .invalidHost = error { true } else { false }
         }
     }
 
@@ -104,8 +116,10 @@ struct RFC5892CodepointClassificationTests {
     // RFC 3986 §2 rejection.
     @Test
     func `§2.4 DISALLOWED — C0 control codepoint rejected in host label`() {
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS("foo\u{0009}bar", .com) }
+        } where: { (error: URLBuildError) in
+            if case .invalidHost = error { true } else { false }
         }
     }
 

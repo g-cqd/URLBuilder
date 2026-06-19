@@ -10,6 +10,7 @@
 //          tolerance.
 // =====================================================================
 
+import ADTestKit
 import Foundation
 import Testing
 import URLBuilder
@@ -38,9 +39,9 @@ struct RFC1035DNSLabelsTests {
     @Test
     func `RFC 1035 §2.3.4 — rejects 64-octet over-limit label`() {
         let label = String(repeating: "a", count: 64)
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS(label, .com) }
-        }
+        } where: { (error: URLBuildError) in error == .invalidHostLabel(label) }
     }
 
     // RFC 1035 §2.3.4 — total length of an FQDN MUST NOT exceed 255 octets
@@ -51,9 +52,9 @@ struct RFC1035DNSLabelsTests {
         let labels = (0 ..< 5).map { _ in String(repeating: "a", count: 50) }
         let big = labels.joined(separator: ".") + ".com"
         #expect(big.utf8.count > 253)
-        #expect(throws: (any Error).self) {
+        expectThrows {
             try withThrowingURL { HTTPS(big) }
-        }
+        } where: { (error: URLBuildError) in error == .invalidHost(big) }
     }
 
     @Test
