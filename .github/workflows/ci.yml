@@ -1,11 +1,7 @@
-# Single workflow: lint → build → test (chained in one job), plus a Linux build, an API-stability
-# check, a cross-platform compile matrix, a public-suffix generator reproducibility check, a
-# sanitizer pass over the IPv6 C-interop, and a DocC build+deploy — all gated on the main job so
-# nothing fans out if lint/build/test fails.
-#
-# Why one gate / few jobs: chaining lint+build+test into one job pays setup (checkout, Xcode
-# select, dependency resolve, cache restore) once and reuses the warm `.build`. The other jobs run
-# only after the gate, and only when relevant.
+# The COMMON legs (lint/gate, build & test on macOS + Linux) route through the shared reusable
+# workflow. The package-UNIQUE jobs run alongside it: an API-stability check, a cross-platform
+# compile matrix, the public-suffix generator reproducibility check, a downstream URL-resolvability
+# check, a path-gated ASan/UBSan pass over the IPv6 C-interop, and the DocC build + Pages deploy.
 name: CI
 
 on:
@@ -26,52 +22,24 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  build-test:
-    name: Lint, build & test (macOS)
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@v6
-      - name: Select latest Xcode
-        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
-      - name: Show toolchain
-        run: swift --version
-      - name: Cache SwiftPM
-        uses: actions/cache@v5
-        with:
-          path: |
-            .build
-            ~/Library/Caches/org.swift.swiftpm
-          key: spm-${{ runner.os }}-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**', 'Tests/**', 'Plugins/**') }}
-          restore-keys: |
-            spm-${{ runner.os }}-${{ hashFiles('Package.swift') }}-
-            spm-${{ runner.os }}-
-      - name: Lint (formatting + shipped-library discipline)
-        run: swift package lint
-      - name: Build
-        run: swift build
-      - name: Test (full conformance suite, with coverage)
-        run: swift test --enable-code-coverage
-      - name: Coverage summary
-        if: always()
-        run: |
-          set -o pipefail
-          BIN=$(swift build --show-bin-path)
-          PROF="$BIN/codecov/default.profdata"
-          XCTEST=$(find "$BIN" -name '*.xctest' -maxdepth 1 | head -1)
-          if [ -n "$XCTEST" ] && [ -f "$PROF" ]; then
-            TOOL="$XCTEST/Contents/MacOS/$(basename "$XCTEST" .xctest)"
-            {
-              echo "## Code coverage"
-              echo '```text'
-              xcrun llvm-cov report "$TOOL" -instr-profile "$PROF" \
-                -ignore-filename-regex='(Tests|\.build|PublicSuffix\.swift)' 2>/dev/null | tail -25
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
+  quality:
+    # Full-adopt of the reusable workflow for the COMMON gate + build/test (macOS + Linux, debug +
+    # release, coverage on the debug macOS leg). URLBuilder depends on the first-party siblings ADJSON
+    # and ADFoundation (resolved from branch: main — Package.swift lines 51 & 58, in the always-on
+    # dependency array), so the resolution-dependent jobs stay gated on AD_SWIFT_SIBLINGS_PUBLISHED;
+    # the file-based gates (format/metrics/drift) always run. This replaces the bespoke macOS gate and
+    # the advisory `nightly-main-jammy` Linux lane with the canonical dated-nightly Linux matrix.
+    # Sanitizers and docs are NOT enabled here: the package-unique `sanitizers` job below is path-gated
+    # to the IPv6 validator and combines address+undefined in one run, and the `docs` job below also
+    # DEPLOYS to GitHub Pages — neither is covered by the reusable's (unconditional, generate-only) legs.
+    uses: g-cqd/ADBuildTools/.github/workflows/swift-quality.yml@v1
+    with:
+      dev-env-var: URLBUILDER_DEV
+      requires-published-siblings: true
 
   changes:
     name: Detect IPv6 / validator changes
-    needs: build-test
+    needs: quality
     # Path gate for the sanitizer pass. The one unsafe boundary in the library is the IPv6 literal
     # path, which calls the platform C library (`inet_pton`/`inet_ntop`) in `URLValidator.swift`.
     # A PR touching the validator should trip ASan/UBSan too; other PRs skip the slow pass.
@@ -90,27 +58,9 @@ jobs:
             validator:
               - 'Sources/URLBuilder/URLValidator.swift'
 
-  linux:
-    name: Build & test (Linux)
-    needs: build-test
-    # Guards portability for Linux consumers (the IPv6 path uses Glibc there). Advisory
-    # (continue-on-error): the package's tools-version (6.3) tracks an unreleased toolchain, so this
-    # runs the main-nightly Linux container, which can be unstable independent of the code. Promote
-    # to a required gate once a matching stable Linux toolchain ships.
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    container: swiftlang/swift:nightly-main-jammy
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-      - name: Show toolchain
-        run: swift --version
-      - name: Build & test
-        run: swift test
-
   api-stability:
     name: API breaking changes
-    needs: build-test
+    needs: quality
     # Catch accidental public-API removals/changes in PRs (additions are fine). Compares the PR head
     # against the PR's base commit on main.
     if: github.event_name == 'pull_request'
@@ -126,9 +76,9 @@ jobs:
 
   platforms:
     name: Build (${{ matrix.platform }})
-    needs: build-test
+    needs: quality
     # Cross-platform compile is broad but costly: run it on main / on demand, not on every PR
-    # (the macOS job above already covers compilation for PRs).
+    # (the macOS leg in the reusable `quality` job already covers compilation for PRs).
     if: github.event_name != 'pull_request'
     runs-on: macos-26
     strategy:
@@ -160,7 +110,7 @@ jobs:
 
   generator-reproducibility:
     name: Public-suffix generator reproducibility
-    needs: build-test
+    needs: quality
     # `Sources/URLBuilder/PublicSuffix.swift` is generated at build time from the vendored IANA +
     # Mozilla inputs and is NOT committed. Generation must be deterministic: regenerating from the
     # same inputs must produce a byte-identical file. Run the standalone generator twice and diff.
@@ -194,7 +144,7 @@ jobs:
 
   downstream-resolvability:
     name: Downstream resolvability (URL dependency)
-    needs: build-test
+    needs: quality
     # Locks the round-1 dependency-safety fix: the shipped `URLBuilder` product carries no unsafe
     # build flags, so a downstream package can depend on it *by URL* (source control) and resolve
     # the graph. A throwaway consumer pins this repo by `file://` URL at the commit under test and
@@ -234,12 +184,14 @@ jobs:
 
   sanitizers:
     name: Sanitize (address + undefined)
-    needs: [build-test, changes]
+    needs: [quality, changes]
     # ASan/UBSan rebuild the whole graph under instrumentation, so run them on main / on demand —
     # and, additionally, on any PR that touches the IPv6 C-interop in `URLValidator.swift` (gated by
     # the `changes` job), the one place an OOB / use-after-free could be introduced. The full test
     # suite (IPv6 literals, host/PSL/path parsing) is the stress input. TSan is omitted: the library
     # is value-typed, immutable, and fully Sendable, so there is no shared mutable state to race.
+    # Package-unique (not the reusable's sanitizer leg): path-gated, and combines address+undefined
+    # in a single run.
     if: github.event_name != 'pull_request' || needs.changes.outputs.validator == 'true'
     runs-on: macos-26
     timeout-minutes: 60
@@ -264,7 +216,7 @@ jobs:
 
   docs:
     name: Build & deploy docs (Pages)
-    needs: build-test
+    needs: quality
     if: github.ref == 'refs/heads/main'
     runs-on: macos-26
     permissions:
