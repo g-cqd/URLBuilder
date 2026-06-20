@@ -13,7 +13,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 3986 §3.2.2 / RFC 4291 / RFC 5952 — Host: IPv6address")
 struct RFC4291_5952IPv6Tests {
     // RFC 4291 §2.2 — three text forms (full, compressed, mixed v4/v6).
     // RFC 5952 §4.1 — leading zeros suppressed.
@@ -105,7 +104,6 @@ struct RFC4291_5952IPv6Tests {
 // NOT contain a zone ID. Obsoletes the experimental syntax of RFC 6874.
 // ---------------------------------------------------------------------
 
-@Suite("RFC 9844 — IPv6 Zone Identifiers in URIs (obsoletes RFC 6874)")
 struct RFC9844ZoneIdentifierTests {
     @Test
     func `RFC 9844 §4 — rejects IPv6 zone identifier in URI host literal`() {
