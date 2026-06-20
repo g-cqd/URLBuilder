@@ -11,7 +11,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("DSL — Structural rules (cross-cutting RFC 3986 §3)")
 struct DSLStructuralTests {
     // RFC 3986 §3 — A URI is one syntactic unit. The DSL enforces a
     // single root declaration per build call.
