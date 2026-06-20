@@ -13,7 +13,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("URLBuildConfiguration — QueryDeduplication")
 struct QueryDeduplicationTests {
     // -----------------------------------------------------------------
     // .none (default) — preserves order and duplicates
