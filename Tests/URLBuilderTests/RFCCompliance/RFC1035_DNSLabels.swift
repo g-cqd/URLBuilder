@@ -15,7 +15,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 1035 + RFC 1123 — DNS Labels (LDH)")
 struct RFC1035DNSLabelsTests {
     // RFC 1035 §2.3.1 (preferred name syntax):
     //   <label> ::= <letter> [ [ <ldh-str> ] <let-dig> ]
