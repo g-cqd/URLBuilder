@@ -2,7 +2,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("URLBuilder — freestanding macros")
 struct MacroIntegrationTests {
     @Test
     func `#URL expands and produces the same URL as URLBuilder`() {
