@@ -14,7 +14,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 3986 §3.2.1 / RFC 9110 §4.2.4 — Userinfo (deprecated)")
 struct RFC3986UserinfoTests {
     private static let usernameOnly = URLBuildConfiguration(userInfoPolicy: .usernameOnly)
     private static let usernameAndPassword = URLBuildConfiguration(
