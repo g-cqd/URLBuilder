@@ -11,7 +11,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("URLBuilder — DSL ergonomics")
 struct URLBuilderTests {
     /// RFC 3986 §3 — single URI per declaration.
     ///
