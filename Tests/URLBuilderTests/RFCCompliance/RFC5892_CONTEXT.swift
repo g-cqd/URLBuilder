@@ -17,7 +17,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 5892 §2.2/§2.3 — CONTEXTJ and CONTEXTO")
 struct RFC5892ContextTests {
     // RFC 5892 §2.2 — CONTEXTJ codepoints:
     //   U+200C ZERO WIDTH NON-JOINER (ZWNJ)
