@@ -6,7 +6,6 @@ import Testing
 
 @testable import URLBuilderMacros
 
-@Suite("URLBuilderMacros — @Query peer marker")
 struct QueryAttributeMacroTests {
     let macroSpecs: [String: MacroSpec] = [
         "URLQuery": MacroSpec(type: URLQueryMacro.self),
