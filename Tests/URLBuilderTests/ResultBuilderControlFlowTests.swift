@@ -11,7 +11,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("Result builders — control flow")
 struct ResultBuilderControlFlowTests {
     // -----------------------------------------------------------------
     // @URLComponentBuilder — if/else, if let, for, switch
