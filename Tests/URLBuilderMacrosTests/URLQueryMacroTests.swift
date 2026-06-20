@@ -6,7 +6,6 @@ import Testing
 
 @testable import URLBuilderMacros
 
-@Suite("URLBuilderMacros — @URLQuery / @Query expansion")
 struct URLQueryMacroTests {
     let macroSpecs: [String: MacroSpec] = [
         "URLQuery": MacroSpec(type: URLQueryMacro.self),
