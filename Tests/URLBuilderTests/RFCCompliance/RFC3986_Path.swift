@@ -11,7 +11,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 3986 §3.3 / §5.2.4 — Path and dot-segments")
 struct RFC3986PathTests {
     // §3.3 — segment = *pchar; pchar excludes "/"
     // §5.2.4 — Remove Dot Segments: "." and ".." MUST be removed during
@@ -68,7 +67,6 @@ struct RFC3986PathTests {
 // and non-injectable, so the segments are NOT re-encoded by the library.
 // =====================================================================
 
-@Suite("RFC 3986 §3.3 — Foundation path-encoding trust boundary")
 struct RFC3986PathFoundationEncodingTests {
     private func path(_ segment: String) throws -> URL {
         try withThrowingURL {
