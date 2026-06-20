@@ -17,7 +17,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("WHATWG URL — RFC-vs-WHATWG divergence pins")
 struct WHATWGURLDivergenceTests {
     // WHATWG: backslash in path is normalised to forward slash for
     // "special" schemes (http/https/ws/wss/ftp/file).
