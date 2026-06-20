@@ -9,7 +9,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("URLBuilder — public convenience aliases")
 struct PublicAliasTests {
     @Test
     func `PathSegment.component composes a path like segment`() throws {
