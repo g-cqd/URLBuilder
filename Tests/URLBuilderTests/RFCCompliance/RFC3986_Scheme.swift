@@ -10,7 +10,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 3986 §3.1 / RFC 7595 §3.8 — Scheme")
 struct RFC3986SchemeTests {
     // §3.1 ABNF:
     //   scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
