@@ -18,7 +18,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 9110 §4.2 — http and https URI Schemes")
 struct RFC9110HTTPSchemeTests {
     // §4.2.1 — http: default port 80
     // §4.2.2 — https: default port 443
