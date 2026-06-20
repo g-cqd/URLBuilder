@@ -46,7 +46,6 @@ private let pslWithHeaders = """
 
 // MARK: - IANA parsing
 
-@Suite("IANA parser")
 struct IANAParserTests {
     @Test
     func `captures the version line and strips the leading hash`() {
@@ -107,7 +106,6 @@ struct IANAParserTests {
 
 // MARK: - PSL parsing
 
-@Suite("PSL parser")
 struct PSLParserTests {
     @Test
     func `captures VERSION and COMMIT headers when present`() {
@@ -170,7 +168,6 @@ struct PSLParserTests {
 
 // MARK: - Identifier rules
 
-@Suite("Swift identifier rules")
 struct IdentifierTests {
     @Test
     func `hyphens are converted to underscores`() {
@@ -196,7 +193,6 @@ struct IdentifierTests {
 
 // MARK: - Emission
 
-@Suite("Emission")
 struct EmissionTests {
     @Test
     func `output is deterministic for the same input`() {
