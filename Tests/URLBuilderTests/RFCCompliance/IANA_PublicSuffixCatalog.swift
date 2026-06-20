@@ -22,7 +22,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("IANA + PSL — Public Suffix Catalog (generated)")
 struct IANAPublicSuffixCatalogTests {
     // Sanity: catalog is non-empty and contains common entries.
     @Test
@@ -101,7 +100,6 @@ struct IANAPublicSuffixCatalogTests {
 //         accepts a `TopLevelDomain`.
 // =====================================================================
 
-@Suite("TopLevelDomain — @dynamicMemberLookup chain composition")
 struct TLDChainCompositionTests {
     // ----- Raw-value composition -----
 
