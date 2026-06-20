@@ -12,7 +12,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 3986 §3.2.2 — Host: reg-name (DNS)")
 struct RFC3986RegNameTests {
     // §3.2.2 — host case-insensitive, normalised to lowercase (§6.2.2.1).
     @Test
