@@ -13,7 +13,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("URLBuilder — Shorthand and Encodable query values")
 struct ShorthandTests {
     private enum SortDirection: String, Codable, Sendable, URLQueryValueConvertible {
         case descending = "desc"
