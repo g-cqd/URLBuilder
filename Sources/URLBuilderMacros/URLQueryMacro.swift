@@ -343,7 +343,12 @@ struct URLQueryMacro: ExtensionMacro {
     private static func isCollectionLiteral(_ expression: ExprSyntax) -> Bool {
         expression.is(ArrayExprSyntax.self) || expression.is(DictionaryExprSyntax.self)
     }
+}
 
+// Binding inspection (stored-vs-computed, type-level/lazy skipping, shared trailing-annotation
+// resolution) and identifier / `@Query` attribute parsing for `URLQueryMacro`. Split from the macro
+// type body to stay within the size/complexity gate.
+extension URLQueryMacro {
     // MARK: - Binding inspection
 
     /// Whether the declaration is `static`/`class` (type-level) or `lazy`.

@@ -339,7 +339,12 @@ internal enum URLValidator {
             throw .invalidHostLabel(label)
         }
     }
+}
 
+// IP-literal validation: IPv4 sanity (leading-zero / range), bracket handling, IPv6
+// canonicalization via inet_pton/inet_ntop, and IPvFuture. Split from the enum body to stay within
+// the size/complexity gate.
+extension URLValidator {
     private static func isInvalidIPv4Literal(_ host: String) -> Bool {
         let parts = host.split(separator: ".", omittingEmptySubsequences: false)
         guard parts.count == 4, parts.allSatisfy({ $0.allSatisfy(\.isASCIIDigit) }) else {
