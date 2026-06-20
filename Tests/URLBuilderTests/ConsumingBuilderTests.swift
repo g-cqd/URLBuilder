@@ -29,7 +29,6 @@ import Testing
 
 @testable import URLBuilder
 
-@Suite("URLBuilder — consuming builder (O(N²)→O(N))")
 struct ConsumingBuilderTests {
     // MARK: Order / content preservation at 1000 elements (storage level)
 
