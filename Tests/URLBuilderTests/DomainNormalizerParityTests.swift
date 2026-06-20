@@ -16,7 +16,6 @@ import Testing
 @testable import PublicSuffixGeneratorCore
 @testable import URLBuilder
 
-@Suite("PublicSuffix — generator/runtime domain-normalizer parity")
 struct DomainNormalizerParityTests {
     // Fixtures exercise accept and reject paths: case-folding, IDNA
     // (U-label → A-label), LDH boundaries, empty labels, and IP-like hosts.
