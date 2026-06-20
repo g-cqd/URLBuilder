@@ -16,7 +16,6 @@ import URLBuilder
 
 // MARK: - High-risk behaviours
 
-@Suite("Security — High-risk behaviours")
 struct SecurityHighSeverityTests {
     // -------------------------------------------------------------------
     // Host string `@` injection bypasses userinfo omission
@@ -186,7 +185,6 @@ struct SecurityHighSeverityTests {
 
 // MARK: - Medium-risk behaviours
 
-@Suite("Security — Medium-risk behaviours")
 struct SecurityMediumSeverityTests {
     // -------------------------------------------------------------------
     // Percent-encoded dot segments bypass traversal rejection
@@ -278,7 +276,6 @@ struct SecurityMediumSeverityTests {
 
 // MARK: - Low-risk behaviours
 
-@Suite("Security — Low-risk behaviours")
 struct SecurityLowSeverityTests {
     // -------------------------------------------------------------------
     // Port 0 is reserved
@@ -314,7 +311,6 @@ struct SecurityLowSeverityTests {
 
 // MARK: - Informational behaviours
 
-@Suite("Security — Informational")
 struct SecurityInfoTests {
     // -------------------------------------------------------------------
     // JSON `withoutEscapingSlashes` leaves `/` literal in Encodable query
@@ -338,7 +334,6 @@ struct SecurityInfoTests {
 
 // MARK: - Correctness regressions with security impact
 
-@Suite("Security — Correctness regressions with security impact")
 struct SecurityCorrectnessRegressionTests {
     // -------------------------------------------------------------------
     // `invalidURLComponents` catch-all error path
