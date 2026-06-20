@@ -12,7 +12,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 3987 / RFC 5890-5894 — IRI and IDNA2008")
 struct RFC3987IRITests {
     // RFC 3987 §3.1 — Mapping IRI to URI
     // RFC 5890 §2.3 — U-label / A-label
