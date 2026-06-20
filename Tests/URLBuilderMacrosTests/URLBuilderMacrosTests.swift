@@ -5,7 +5,6 @@ import Testing
 
 @testable import URLBuilderMacros
 
-@Suite("URLBuilderMacros — expansion")
 struct URLBuilderMacrosTests {
     let macroSpecs: [String: MacroSpec] = [
         "URL": MacroSpec(type: URLMacro.self)
