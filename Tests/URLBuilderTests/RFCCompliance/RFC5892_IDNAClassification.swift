@@ -28,7 +28,6 @@ import Foundation
 import Testing
 import URLBuilder
 
-@Suite("RFC 5892 — IDNA codepoint classification (ISO/IEC 10646)")
 struct RFC5892CodepointClassificationTests {
     // RFC 5892 §2.1 PVALID — LDH (letter / digit / hyphen) and Unicode
     // letters classified PVALID by the derived property table. ASCII
