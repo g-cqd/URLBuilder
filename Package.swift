@@ -74,15 +74,8 @@ if isDev {
     }
     packageDependencies.append(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
-    // ADTestKit — the shared AD-family testing architecture (typed oracles/asserts, SeededRNG,
-    // async/time tools). Test-only and dev-gated, so consumers of URLBuilder never resolve it.
-    // Local checkout via `ADTESTKIT_PATH`, otherwise the published `main`.
-    if let path = Context.environment["ADTESTKIT_PATH"], !path.isEmpty {
-        packageDependencies.append(.package(path: path))
-    } else {
-        packageDependencies.append(
-            .package(url: "https://github.com/g-cqd/ADTestKit.git", branch: "main"))
-    }
+    // ADTestKit is folded into ADFoundation; the test target references it via `package: "ADFoundation"`
+    // (adfoundationDependency is already a non-dev dependency for ADFCore + ADFMacroSupport).
 }
 
 // Build-time formatting enforcement attaches to the library only in dev/CI. A build-tool plugin on
@@ -201,6 +194,6 @@ let package = Package(
 if isDev {
     // Wire the dev-only ADTestKit into the main test target (downstream consumers never see it).
     if let tests = package.targets.first(where: { $0.name == "URLBuilderTests" }) {
-        tests.dependencies.append(.product(name: "ADTestKit", package: "ADTestKit"))
+        tests.dependencies.append(.product(name: "ADTestKit", package: "ADFoundation"))
     }
 }
