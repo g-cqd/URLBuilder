@@ -74,6 +74,11 @@ if isDev {
     }
     packageDependencies.append(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
+    // ordo-one's package-benchmark: the `swift package benchmark` plugin runs the `Benchmarks/`
+    // suite with statistical rigor (p-percentile latency, malloc/throughput metrics). Dev-gated so
+    // downstream consumers of URLBuilder never resolve it. Matches the sibling packages' setup.
+    packageDependencies.append(
+        .package(url: "https://github.com/ordo-one/benchmark", from: "1.4.0"))
     // ADTestKit is folded into ADFoundation; the test target references it via `package: "ADFoundation"`
     // (adfoundationDependency is already a non-dev dependency for ADFCore + ADFMacroSupport).
 }
@@ -196,4 +201,19 @@ if isDev {
     if let tests = package.targets.first(where: { $0.name == "URLBuilderTests" }) {
         tests.dependencies.append(.product(name: "ADTestKit", package: "ADFoundation"))
     }
+
+    // ordo-one package-benchmark suite (URLBUILDER_DEV-gated): `URLBUILDER_DEV=1 swift package benchmark`
+    // runs the `Benchmarks/URLBuilderSuite` percentile suite (URL-assembly DSL, query/percent-encoding,
+    // public-suffix lookup). Lives under `Benchmarks/` per the framework's convention, matching siblings.
+    package.targets.append(
+        .executableTarget(
+            name: "URLBuilderSuite",
+            dependencies: [
+                "URLBuilder",
+                .product(name: "Benchmark", package: "benchmark")
+            ],
+            path: "Benchmarks/URLBuilderSuite",
+            swiftSettings: strictSettings,
+            plugins: [.plugin(name: "BenchmarkPlugin", package: "benchmark")]
+        ))
 }
