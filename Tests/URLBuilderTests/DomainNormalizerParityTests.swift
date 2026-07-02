@@ -35,13 +35,20 @@ struct DomainNormalizerParityTests {
     }
 
     // Anchor a few concrete expectations so the parity check cannot pass by both
-    // sides trivially returning `nil` for everything.
+    // sides trivially returning `nil` for everything. Split per behavior (IDNA vs
+    // case-folding) to keep each body inside the family's type-check budget.
     @Test
-    func `both normalizers perform IDNA and case-folding`() {
-        #expect(PublicSuffix.normalizedDomain("MÜNCHEN.de") == "xn--mnchen-3ya.de")
-        #expect(PublicSuffixGenerator.normalizedDomain("MÜNCHEN.de") == "xn--mnchen-3ya.de")
-        #expect(PublicSuffix.normalizedDomain("Example.COM") == "example.com")
-        #expect(PublicSuffixGenerator.normalizedDomain("Example.COM") == "example.com")
+    func `both normalizers perform IDNA`() {
+        let expected: String? = "xn--mnchen-3ya.de"
+        #expect(PublicSuffix.normalizedDomain("MÜNCHEN.de") == expected)
+        #expect(PublicSuffixGenerator.normalizedDomain("MÜNCHEN.de") == expected)
+    }
+
+    @Test
+    func `both normalizers case-fold ASCII`() {
+        let expected: String? = "example.com"
+        #expect(PublicSuffix.normalizedDomain("Example.COM") == expected)
+        #expect(PublicSuffixGenerator.normalizedDomain("Example.COM") == expected)
     }
 
     @Test

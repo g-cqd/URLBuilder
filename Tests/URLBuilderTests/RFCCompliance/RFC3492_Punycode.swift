@@ -13,24 +13,50 @@ import Foundation
 import Testing
 import URLBuilder
 
+// RFC 3492 §3 / RFC 5891 §4.4 — well-known Punycode encodings.
+// German "bücher" → "xn--bcher-kva"; French "café" → "xn--caf-dma";
+// Cyrillic "пример" → "xn--e1afmkfd". The A-label MUST start with
+// the ACE prefix "xn--".
+// Typed file-scope fixture: a concrete Sendable struct (not a tuple) keeps both the literal's
+// inference and the @Test macro thunk's per-argument tuple machinery out of the
+// (type-check-budgeted) test body.
+struct ALabelFixture: Sendable, CustomStringConvertible {
+    let input: String
+    let expected: String
+    var description: String { input }
+}
+
+private let knownALabelEncodings: [ALabelFixture] = [
+    ALabelFixture(input: "bücher", expected: "xn--bcher-kva"),
+    ALabelFixture(input: "café", expected: "xn--caf-dma"),
+    ALabelFixture(input: "пример", expected: "xn--e1afmkfd"),
+    ALabelFixture(input: "中国", expected: "xn--fiqs8s")
+]
+
 struct RFC3492PunycodeTests {
-    // RFC 3492 §3 / RFC 5891 §4.4 — well-known Punycode encodings.
-    // German "bücher" → "xn--bcher-kva"; French "café" → "xn--caf-dma";
-    // Cyrillic "пример" → "xn--e1afmkfd". The A-label MUST start with
-    // the ACE prefix "xn--".
-    @Test(
-        arguments: [
-            ("bücher", "xn--bcher-kva"),
-            ("café", "xn--caf-dma"),
-            ("пример", "xn--e1afmkfd"),
-            ("中国", "xn--fiqs8s")
-        ])
-    func `RFC 3492 — U-label round-trips through known A-label encoding`(
-        input: String, expected: String
-    ) throws {
+    /// Builds `https://<input>.com` and returns its host. Extracted so the DSL closure's
+    /// overload resolution is type-checked once here, not inside the budgeted parameterized
+    /// test body the @Test macro thunk re-checks.
+    private func builtHost(for input: String) throws -> String? {
         let url = try withThrowingURL { HTTPS(input, .com) }
-        #expect(url.host == "\(expected).com")
-        #expect(url.host?.hasPrefix("xn--") == true)
+        return url.host
+    }
+
+    @Test(arguments: knownALabelEncodings)
+    func `RFC 3492 — U-label round-trips through known A-label encoding`(
+        fixture: ALabelFixture
+    ) throws {
+        let host: String? = try builtHost(for: fixture.input)
+        let expectedHost: String? = fixture.expected + ".com"
+        #expect(host == expectedHost)
+    }
+
+    // RFC 5891 §4.4 / RFC 5890 §2.3.2.1 — every expected A-label in the fixture set carries the
+    // ACE prefix, so the exact-equality test above also pins the prefix requirement.
+    @Test
+    func `RFC 5890 §2.3.2.1 — every fixture A-label starts with the ACE prefix`() {
+        let prefixed: Bool = knownALabelEncodings.allSatisfy { $0.expected.hasPrefix("xn--") }
+        #expect(prefixed)
     }
 
     // RFC 5890 §2.3.2.1 — ACE prefix "xn--" is case-insensitive on input;
