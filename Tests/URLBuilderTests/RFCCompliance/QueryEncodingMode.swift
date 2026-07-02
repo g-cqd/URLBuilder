@@ -218,7 +218,9 @@ struct QueryEncodingModeTests {
             try withThrowingURL(configuration: Self.form) {
                 HTTPS("example.com") { Query("bad\r\nname", "v") }
             }
-        } where: { (error: URLBuildError) in error == .invalidQueryName("bad\r\nname") }
+        } where: { (error: URLBuildError) in
+            error == .invalidQueryName("bad\r\nname")
+        }
     }
 
     @Test
@@ -227,7 +229,9 @@ struct QueryEncodingModeTests {
             try withThrowingURL(configuration: Self.form) {
                 HTTPS("example.com") { Query("k", "bad\u{00}v") }
             }
-        } where: { (error: URLBuildError) in error == .invalidQueryValue(name: "k", value: "bad\u{00}v") }
+        } where: { (error: URLBuildError) in
+            error == .invalidQueryValue(name: "k", value: "bad\u{00}v")
+        }
     }
 
     @Test

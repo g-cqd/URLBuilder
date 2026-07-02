@@ -40,7 +40,9 @@ struct RFC1035DNSLabelsTests {
         let label = String(repeating: "a", count: 64)
         expectThrows {
             try withThrowingURL { HTTPS(label, .com) }
-        } where: { (error: URLBuildError) in error == .invalidHostLabel(label) }
+        } where: { (error: URLBuildError) in
+            error == .invalidHostLabel(label)
+        }
     }
 
     // RFC 1035 §2.3.4 — total length of an FQDN MUST NOT exceed 255 octets
@@ -53,7 +55,9 @@ struct RFC1035DNSLabelsTests {
         #expect(big.utf8.count > 253)
         expectThrows {
             try withThrowingURL { HTTPS(big) }
-        } where: { (error: URLBuildError) in error == .invalidHost(big) }
+        } where: { (error: URLBuildError) in
+            error == .invalidHost(big)
+        }
     }
 
     @Test

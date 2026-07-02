@@ -40,7 +40,9 @@ struct RFC3986RegNameTests {
                     }
                 }
             }
-        } where: { (error: URLBuildError) in error == .invalidHostLabel(label) }
+        } where: { (error: URLBuildError) in
+            error == .invalidHostLabel(label)
+        }
     }
 
     // §3.2.2 reg-name allowed characters (effectively IDNA after Foundation).

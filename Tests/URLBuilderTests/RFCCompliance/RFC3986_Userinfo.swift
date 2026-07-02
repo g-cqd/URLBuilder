@@ -210,20 +210,22 @@ struct RFC3986UserinfoTests {
         // Codify the no-bare-`Error.self` discipline: require the *typed* error and the
         // exact case, with the offending label echoed (so a different rejection — or a
         // silent acceptance that smuggles userinfo through the host grammar — fails).
-        expectThrows({
-            try withThrowingURL {
-                HTTPS {
-                    Host {
-                        .domain("user@evil")
-                            .topLevelDomain(.com)
+        expectThrows(
+            {
+                try withThrowingURL {
+                    HTTPS {
+                        Host {
+                            .domain("user@evil")
+                                .topLevelDomain(.com)
+                        }
                     }
                 }
-            }
-        }, where: { (error: URLBuildError) in
-            // The composed host is rejected as a whole (`invalidHost`), not per-label —
-            // the assembled-host validation the comment above describes.
-            guard case .invalidHost(let host) = error else { return false }
-            return host.contains("user@evil")
-        })
+            },
+            where: { (error: URLBuildError) in
+                // The composed host is rejected as a whole (`invalidHost`), not per-label —
+                // the assembled-host validation the comment above describes.
+                guard case .invalidHost(let host) = error else { return false }
+                return host.contains("user@evil")
+            })
     }
 }
