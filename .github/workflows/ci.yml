@@ -241,7 +241,10 @@ jobs:
             spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-
             spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-
       - name: Test under address + undefined sanitizers
-        run: swift test --sanitize=address --sanitize=undefined
+        # URLBUILDER_DEV wires the dev-only ADTestKit (from the ADFoundation umbrella) into the test
+        # target; without it the suite fails dependency scanning on `import ADTestKit`. The reusable
+        # workflow sets this via its `dev-env-var` input, but this bespoke leg must set it itself.
+        run: URLBUILDER_DEV=1 swift test --sanitize=address --sanitize=undefined
 
   docs:
     name: Build & deploy docs (Pages)
