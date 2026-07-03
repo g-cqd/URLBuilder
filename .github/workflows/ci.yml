@@ -233,10 +233,13 @@ jobs:
           path: |
             .build
             ~/Library/Caches/org.swift.swiftpm
-          key: spm-${{ runner.os }}-san-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**', 'Tests/**', 'Plugins/**') }}
+          # TOOLCHAINS (exported by setup-swift above) is part of the key: a `.build` produced by a
+          # DIFFERENT snapshot fails clang dependency scanning when restored, so cross-toolchain
+          # fallbacks are excluded (the stale-incremental class the family tracks as #14).
+          key: spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**', 'Tests/**', 'Plugins/**') }}
           restore-keys: |
-            spm-${{ runner.os }}-san-${{ hashFiles('Package.swift') }}-
-            spm-${{ runner.os }}-san-
+            spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-
+            spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-
       - name: Test under address + undefined sanitizers
         run: swift test --sanitize=address --sanitize=undefined
 
