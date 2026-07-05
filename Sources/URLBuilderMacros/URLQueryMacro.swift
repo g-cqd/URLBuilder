@@ -151,8 +151,8 @@ struct URLQueryMacro: ExtensionMacro {
         node: some SyntaxProtocol,
         in context: some MacroExpansionContext
     ) -> String? {
-        let keyLiteral = swiftStringLiteral(key)
-        let value = escapedIdentifier(name)
+        let keyLiteral = SwiftSource.stringLiteral(key)
+        let value = SwiftSource.escapedIdentifier(name)
 
         guard let type else {
             // M4 — without an annotation a collection literal would route through
@@ -224,7 +224,7 @@ struct URLQueryMacro: ExtensionMacro {
             )
             return nil
         }
-        return "if \(escapedIdentifier(name)) { Query(\(swiftStringLiteral(name))) }"
+        return "if \(SwiftSource.escapedIdentifier(name)) { Query(\(SwiftSource.stringLiteral(name))) }"
     }
 
     /// Whether `type` is `Bool` or `Bool?` (one optional layer peeled).
