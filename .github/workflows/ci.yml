@@ -40,6 +40,10 @@ jobs:
     # DEPLOYS to GitHub Pages — neither is covered by the reusable's (unconditional, generate-only) legs.
     uses: g-cqd/ADBuildTools/.github/workflows/swift-quality.yml@v1
     with:
+      # arcleak and dolly GATE (arcleak measured 0 findings family-wide; dolly runs the token
+      # pass against .dolly-baseline.json, so only NEW clones fail). deadwood is report-only —
+      # its syntax-mode dataflow cannot see writes through closures or mutating methods.
+      enable-static-analysis: true
       dev-env-var: URLBUILDER_DEV
       enable-sanitizers: true
       sanitizers: "address thread"
