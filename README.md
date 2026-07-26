@@ -167,7 +167,7 @@ ICANN suffix. IPv4 and IPv6 literals are exempt.
 The catalogue is generated automatically before every build by the
 `PublicSuffixGeneratorPlugin` build tool plugin, sourced from the
 vendored IANA Root Zone Database and Mozilla Public Suffix List under
-`Documentation/References/TLDs/`. To pick up upstream changes,
+`docs/References/TLDs/`. To pick up upstream changes,
 refresh those two files and rebuild — the plugin re-runs whenever its
 inputs change.
 
@@ -304,14 +304,14 @@ input.
 
 ## Documentation
 
-- [`Documentation/Requirements.md`](Documentation/Requirements.md) —
+- [`docs/Requirements.md`](docs/Requirements.md) —
   the current requirements and design decisions for the package.
-- [`Documentation/Standards.md`](Documentation/Standards.md) —
+- [`docs/Standards.md`](docs/Standards.md) —
   the standards rationale behind each public API decision.
-- [`Documentation/Appendix-StandardsCoverage.md`](Documentation/Appendix-StandardsCoverage.md)
+- [`docs/Appendix-StandardsCoverage.md`](docs/Appendix-StandardsCoverage.md)
   — appendix listing the quality guarantees the package delivers, the
   standard that backs each one, and the test that locks it in.
-- [`Documentation/References/`](Documentation/References/) — local
+- [`docs/References/`](docs/References/) — local
   copies of every cited RFC, the Unicode UCD, the IANA Root Zone TLD
   list, the Mozilla Public Suffix List, and the WHATWG URL Standard.
 

@@ -38,7 +38,7 @@ with a trailing `// lint:allow` comment.
 
 `Sources/URLBuilder/PublicSuffix.swift` is **generated** at build time by the
 `PublicSuffixGeneratorPlugin` from the vendored IANA Root Zone Database and Mozilla Public Suffix
-List under `Documentation/References/TLDs/`. Never edit the generated file by hand — change the
+List under `docs/References/TLDs/`. Never edit the generated file by hand — change the
 generator (`Sources/PublicSuffixGeneratorCore`) or the vendored inputs instead.
 
 The generation is deterministic: regenerating from the same inputs must produce a byte-identical
