@@ -42,27 +42,16 @@ let testSettings: [SwiftSetting] =
 // plugins, which resolve only with the flag set (CI and the git hooks set it).
 let isDev = Context.environment["URLBUILDER_DEV"] != nil
 
-// First-party dependencies resolve from a published `main` branch by default, or from a local
-// checkout when the matching PATH env var is set — an absolute or relative path of the caller's
-// choice, so the checkouts need not be co-located. There is no hardcoded relative default.
-//   • `ADJSON_PATH`       → ADJSON (JSON encoding for `Encodable` query values: sorted keys,
-//                           unescaped slashes, Foundation-free core)
-//   • `ADFOUNDATION_PATH` → ADFoundation (`ADFCore` ASCII / byte primitives)
+// First-party dependencies always resolve from the published `main` branch.
+//   • ADJSON       — JSON encoding for `Encodable` query values: sorted keys,
+//                    unescaped slashes, Foundation-free core
+//   • ADFoundation — `ADFCore` ASCII / byte primitives
 // (Branch-pinned, so a tagged URLBuilder release cannot itself be resolved via
 // `.package(url:from:)` — SwiftPM forbids a versioned package depending on an unversioned one.)
-let adjsonDependency: Package.Dependency = {
-    if let path = Context.environment["ADJSON_PATH"], !path.isEmpty {
-        return .package(path: path)
-    }
-    return .package(url: "https://github.com/g-cqd/ADJSON.git", branch: "main")
-}()
+let adjsonDependency: Package.Dependency = .package(url: "https://github.com/g-cqd/ADJSON.git", branch: "main")
 
-let adfoundationDependency: Package.Dependency = {
-    if let path = Context.environment["ADFOUNDATION_PATH"], !path.isEmpty {
-        return .package(path: path)
-    }
-    return .package(url: "https://github.com/g-cqd/ADFoundation.git", branch: "main")
-}()
+let adfoundationDependency: Package.Dependency = .package(
+    url: "https://github.com/g-cqd/ADFoundation.git", branch: "main")
 
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0"),
@@ -70,14 +59,10 @@ var packageDependencies: [Package.Dependency] = [
     adfoundationDependency
 ]
 if isDev {
-    // Shared lint/format tooling (Format/Lint/LintBuild plugins + canonical `.swift-format`). Dev-only,
-    // resolved from a local checkout via `ADBUILDTOOLS_PATH`, otherwise the published `main` branch.
-    if let path = Context.environment["ADBUILDTOOLS_PATH"], !path.isEmpty {
-        packageDependencies.append(.package(path: path))
-    } else {
-        packageDependencies.append(
-            .package(url: "https://github.com/g-cqd/ADBuildTools.git", branch: "main"))
-    }
+    // Shared lint/format tooling (Format/Lint/LintBuild plugins + canonical `.swift-format`).
+    // Dev-only, resolved from the published `main` branch.
+    packageDependencies.append(
+        .package(url: "https://github.com/g-cqd/ADBuildTools.git", branch: "main"))
     packageDependencies.append(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
     // ordo-one's package-benchmark: the `swift package benchmark` plugin runs the `Benchmarks/`
@@ -161,6 +146,10 @@ let package = Package(
             name: "URLBuilderTests",
             dependencies: [
                 "URLBuilder", "PublicSuffixGeneratorCore",
+                // Unconditional: 8 test files import ADTestKit with no `#if canImport` guard, so
+                // gating this behind URLBUILDER_DEV made a plain `swift test` a hard compile failure.
+                // ADFoundation is already a non-dev dependency, so this costs consumers nothing.
+                .product(name: "ADTestKit", package: "ADFoundation"),
                 // On a clean build SwiftPM links the `URLBuilderMacros` *-testable* object into this
                 // bundle too (it is only meant to be a compile-time plugin for the `URLBuilder` library);
                 // that object references swift-syntax + the compiler-plugin runtime, so without these
@@ -203,11 +192,6 @@ let package = Package(
 )
 
 if isDev {
-    // Wire the dev-only ADTestKit into the main test target (downstream consumers never see it).
-    if let tests = package.targets.first(where: { $0.name == "URLBuilderTests" }) {
-        tests.dependencies.append(.product(name: "ADTestKit", package: "ADFoundation"))
-    }
-
     // ordo-one package-benchmark suite (URLBUILDER_DEV-gated): `URLBUILDER_DEV=1 swift package benchmark`
     // runs the `Benchmarks/URLBuilderSuite` percentile suite (URL-assembly DSL, query/percent-encoding,
     // public-suffix lookup). Lives under `Benchmarks/` per the framework's convention, matching siblings.

@@ -23,7 +23,7 @@ struct PublicSuffixGeneratorPlugin: BuildToolPlugin {
     func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
         let tool = try context.tool(named: "public-suffix-generator")
         let resources = context.package.directoryURL
-            .appending(path: "Documentation/References/TLDs", directoryHint: .isDirectory)
+            .appending(path: "docs/References/TLDs", directoryHint: .isDirectory)
         let ianaFile = resources.appending(path: "tlds-alpha-by-domain.txt")
         let pslFile = resources.appending(path: "public_suffix_list.dat")
         let outputFile = context.pluginWorkDirectoryURL.appending(path: "PublicSuffix.swift")

@@ -88,20 +88,11 @@ a library lets its consumers' resolution win).
 > forbids a versioned package from depending on an unversioned one. Switch the ADJSON requirement
 > to a `from:` tag before publishing a versioned URLBuilder release.
 
-### Developing against a local ADJSON checkout
+### Developing against ADJSON
 
-To iterate on URLBuilder and ADJSON together, point the ADJSON dependency at a local checkout with
-the `URLBUILDER_LOCAL_ADJSON` environment variable (kept separate from `URLBUILDER_DEV` so the
-DocC / lint tooling never requires an ADJSON checkout):
-
-```sh
-URLBUILDER_LOCAL_ADJSON=1 swift build                    # use the sibling ../ADJSON
-URLBUILDER_LOCAL_ADJSON=/path/to/ADJSON swift test       # use a custom path
-swift build                                              # unset → the published main branch
-```
-
-`Package.resolved` is gitignored and path dependencies are never recorded in it, so toggling the
-variable leaves no committed trace.
+ADJSON always resolves from the published `main` branch — there is no local-checkout override. To
+iterate on URLBuilder and ADJSON together, push the ADJSON change and re-resolve
+(`swift package update ADJSON`).
 
 ## Git hooks
 
