@@ -157,8 +157,8 @@ jobs:
         run: |
           set -euo pipefail
           BIN="$(swift build --product public-suffix-generator --show-bin-path)/public-suffix-generator"
-          IANA="Documentation/References/TLDs/tlds-alpha-by-domain.txt"
-          PSL="Documentation/References/TLDs/public_suffix_list.dat"
+          IANA="docs/References/TLDs/tlds-alpha-by-domain.txt"
+          PSL="docs/References/TLDs/public_suffix_list.dat"
           "$BIN" "$IANA" "$PSL" /tmp/PublicSuffix.1.swift
           "$BIN" "$IANA" "$PSL" /tmp/PublicSuffix.2.swift
           diff -u /tmp/PublicSuffix.1.swift /tmp/PublicSuffix.2.swift
