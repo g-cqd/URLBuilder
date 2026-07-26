@@ -1,9 +1,9 @@
 // =====================================================================
 // URLBuildConfiguration — query rendering encoding
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §2.1, §3.4
-//          Documentation/References/RFCs/rfc3629.txt §3 (UTF-8)
-//          Documentation/References/WHATWG/url.html  §5.2
+// Spec:    docs/References/RFCs/rfc3986.txt §2.1, §3.4
+//          docs/References/RFCs/rfc3629.txt §3 (UTF-8)
+//          docs/References/WHATWG/url.html  §5.2
 //          (`application/x-www-form-urlencoded` serializer)
 //          HTML Living Standard form-urlencoded byte set
 //          (alphanumeric + `*` / `-` / `.` / `_`).

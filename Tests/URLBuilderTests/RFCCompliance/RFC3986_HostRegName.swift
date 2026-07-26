@@ -1,8 +1,8 @@
 // =====================================================================
 // RFC 3986 §3.2.2 — Host: reg-name (DNS)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.2.2 + §6.2.2.1
-//          Documentation/References/RFCs/rfc1035.txt  §2.3.1 / §2.3.4
+// Spec:    docs/References/RFCs/rfc3986.txt §3.2.2 + §6.2.2.1
+//          docs/References/RFCs/rfc1035.txt  §2.3.1 / §2.3.4
 // Scope:   DNS reg-name grammar, label length, label character set,
 //          host case normalisation, trailing absolute-root dot.
 // =====================================================================

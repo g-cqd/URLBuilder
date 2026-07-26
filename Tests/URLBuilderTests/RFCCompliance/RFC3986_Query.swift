@@ -1,7 +1,7 @@
 // =====================================================================
 // RFC 3986 §3.4 — Query
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.4
+// Spec:    docs/References/RFCs/rfc3986.txt §3.4
 // Scope:   query grammar (`*( pchar / "/" / "?" )`), repeated-name
 //          ordering, DSL flag-vs-empty distinction, empty-name rejection.
 // =====================================================================

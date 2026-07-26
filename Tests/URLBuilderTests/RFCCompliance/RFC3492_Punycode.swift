@@ -1,8 +1,8 @@
 // =====================================================================
 // RFC 3492 — Punycode (Bootstring for IDNA)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3492.txt
-//          Documentation/References/RFCs/rfc5891.txt §4.4 (toASCII)
+// Spec:    docs/References/RFCs/rfc3492.txt
+//          docs/References/RFCs/rfc5891.txt §4.4 (toASCII)
 // Scope:   U-label → A-label conversion uses the Punycode (Bootstring)
 //          algorithm. Each non-ASCII U-label MUST yield an A-label that
 //          starts with the ACE prefix "xn--" (RFC 5891 §4.4 / RFC 5890

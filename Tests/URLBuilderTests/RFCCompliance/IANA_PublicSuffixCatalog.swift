@@ -1,9 +1,9 @@
 // =====================================================================
 // IANA Root Zone + Mozilla PSL — Public Suffix Catalog
 // ---------------------------------------------------------------------
-// Source:  Documentation/References/TLDs/tlds-alpha-by-domain.txt
-//          Documentation/References/TLDs/public_suffix_list.dat
-//          Documentation/References/TLDs/icann-cctld-delegation-policy.html
+// Source:  docs/References/TLDs/tlds-alpha-by-domain.txt
+//          docs/References/TLDs/public_suffix_list.dat
+//          docs/References/TLDs/icann-cctld-delegation-policy.html
 // Scope:   Verifies the generated `PublicSuffix` catalog is loaded
 //          correctly and exposes the expected single- and multi-label
 //          suffixes. The catalog is regenerated automatically before
@@ -93,7 +93,7 @@ struct IANAPublicSuffixCatalogTests {
 // =====================================================================
 // @dynamicMemberLookup chain — TLD.co.uk, TLD.com.au, ...
 // ---------------------------------------------------------------------
-// Source: Documentation/References/TLDs/public_suffix_list.dat
+// Source: docs/References/TLDs/public_suffix_list.dat
 // Scope:  Verifies that the dynamic-member chain composes labels
 //         correctly, equals the raw-string form, hashes consistently,
 //         and threads through every public DSL entry point that

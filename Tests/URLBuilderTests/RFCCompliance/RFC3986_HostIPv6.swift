@@ -1,10 +1,10 @@
 // =====================================================================
 // RFC 3986 §3.2.2 / RFC 4291 / RFC 5952 / RFC 9844 — Host: IPv6
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.2.2 (IP-literal)
-//          Documentation/References/RFCs/rfc4291.txt §2.2 (text forms)
-//          Documentation/References/RFCs/rfc5952.txt §4.1-§4.3 (canonical)
-//          Documentation/References/RFCs/rfc9844.txt §4 (zone IDs)
+// Spec:    docs/References/RFCs/rfc3986.txt §3.2.2 (IP-literal)
+//          docs/References/RFCs/rfc4291.txt §2.2 (text forms)
+//          docs/References/RFCs/rfc5952.txt §4.1-§4.3 (canonical)
+//          docs/References/RFCs/rfc9844.txt §4 (zone IDs)
 // Scope:   IPv6 literal canonicalisation, bracketing, and rejection of
 //          zone identifiers in URI host literals.
 // =====================================================================

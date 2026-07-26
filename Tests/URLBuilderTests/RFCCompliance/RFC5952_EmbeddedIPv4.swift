@@ -1,8 +1,8 @@
 // =====================================================================
 // RFC 5952 §5 — IPv6 with Embedded IPv4 (mixed text form)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc5952.txt §5
-//          Documentation/References/RFCs/rfc4291.txt §2.5.5 + §2.2 (3)
+// Spec:    docs/References/RFCs/rfc5952.txt §5
+//          docs/References/RFCs/rfc4291.txt §2.5.5 + §2.2 (3)
 // Scope:   IPv4-mapped (::ffff:0:0/96) and IPv4-compatible (::/96)
 //          forms.  RFC 5952 §5 RECOMMENDS the dotted-quad form ONLY
 //          when the address belongs to one of the well-defined embedded

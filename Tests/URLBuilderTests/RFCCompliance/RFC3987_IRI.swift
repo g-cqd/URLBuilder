@@ -1,9 +1,9 @@
 // =====================================================================
 // RFC 3987 / RFC 5890–5894 — IRI and IDNA2008 (basics)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3987.txt §3.1
-//          Documentation/References/RFCs/rfc5890.txt §2.3
-//          Documentation/References/RFCs/rfc5891.txt §4
+// Spec:    docs/References/RFCs/rfc3987.txt §3.1
+//          docs/References/RFCs/rfc5890.txt §2.3
+//          docs/References/RFCs/rfc5891.txt §4
 // Scope:   IRI-to-URI mapping, U-label / A-label conversion via Punycode,
 //          A-label case normalisation, ucschar percent-encoding via UTF-8.
 // =====================================================================

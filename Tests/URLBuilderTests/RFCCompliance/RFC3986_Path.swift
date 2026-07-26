@@ -1,8 +1,8 @@
 // =====================================================================
 // RFC 3986 §3.3 / §5.2.4 — Path and dot-segments
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.3 + §5.2.4
-//          Documentation/References/RFCs/rfc9110.txt §4.2.3
+// Spec:    docs/References/RFCs/rfc3986.txt §3.3 + §5.2.4
+//          docs/References/RFCs/rfc9110.txt §4.2.3
 // Scope:   path-segment grammar (pchar), traversal-segment rejection
 //          (`.` / `..`), separator handling, empty-path rendering.
 // =====================================================================

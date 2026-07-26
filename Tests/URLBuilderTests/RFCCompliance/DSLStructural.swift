@@ -1,7 +1,7 @@
 // =====================================================================
 // DSL — Structural rules (cross-cutting RFC 3986 §3)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3 / §3.2
+// Spec:    docs/References/RFCs/rfc3986.txt §3 / §3.2
 // Scope:   single-root URI, single-host component, port-requires-host.
 //          These pin the DSL's structural invariants that mirror the
 //          "URI = one syntactic unit" principle of RFC 3986 §3.

@@ -1,8 +1,8 @@
 // =====================================================================
 // WHATWG URL Standard — divergence pins
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/WHATWG/url.html  (living standard)
-//          Documentation/References/RFCs/rfc3986.txt (RFC URI grammar)
+// Spec:    docs/References/WHATWG/url.html  (living standard)
+//          docs/References/RFCs/rfc3986.txt (RFC URI grammar)
 // Scope:   The DSL targets RFC 3986 / 3987 / 5891.  The WHATWG URL
 //          living standard documents browser-oriented behaviours that
 //          deliberately differ from the RFC grammar (lenient backslash

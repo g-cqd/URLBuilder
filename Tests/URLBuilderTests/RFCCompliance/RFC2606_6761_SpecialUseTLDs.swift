@@ -2,12 +2,12 @@
 // RFC 2606 / RFC 6761 / RFC 6762 / RFC 7686 / RFC 8375 / RFC 9476
 //   — Special-Use Domain Names
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc2606.txt §2 + §3
-//          Documentation/References/RFCs/rfc6761.txt §6
-//          Documentation/References/RFCs/rfc6762.txt §3
-//          Documentation/References/RFCs/rfc7686.txt §2
-//          Documentation/References/RFCs/rfc8375.txt §3
-//          Documentation/References/RFCs/rfc9476.txt §2
+// Spec:    docs/References/RFCs/rfc2606.txt §2 + §3
+//          docs/References/RFCs/rfc6761.txt §6
+//          docs/References/RFCs/rfc6762.txt §3
+//          docs/References/RFCs/rfc7686.txt §2
+//          docs/References/RFCs/rfc8375.txt §3
+//          docs/References/RFCs/rfc9476.txt §2
 // Scope:   Reserved and special-use TLDs (.test / .example / .invalid /
 //          .localhost / .local / .onion / .home.arpa / .alt). The DSL
 //          accepts them as well-formed labels because the URI grammar

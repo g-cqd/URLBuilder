@@ -1,9 +1,9 @@
 // =====================================================================
 // RFC 1035 / RFC 1123 — DNS Labels (LDH rule)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc1035.txt §2.3.1 + §2.3.4
-//          Documentation/References/RFCs/rfc1123.txt §2.1
-//          Documentation/References/RFCs/rfc3986.txt §3.2.2 (reg-name)
+// Spec:    docs/References/RFCs/rfc1035.txt §2.3.1 + §2.3.4
+//          docs/References/RFCs/rfc1123.txt §2.1
+//          docs/References/RFCs/rfc3986.txt §3.2.2 (reg-name)
 // Scope:   DNS label preferred-syntax (LDH = Letter / Digit / Hyphen),
 //          1-63 octet length, total host name 1-253 octets, hyphen
 //          placement, RFC 1123 digit-leading allowance, trailing-dot

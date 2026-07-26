@@ -1,7 +1,7 @@
 // =====================================================================
 // RFC 3986 §2 — Characters and Percent-Encoding
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §2
+// Spec:    docs/References/RFCs/rfc3986.txt §2
 // Scope:   percent-encoding triplet syntax, reserved/unreserved sets,
 //          double-encoding avoidance, hex case normalisation, and the
 //          NUL byte rejection that keeps strings out of the

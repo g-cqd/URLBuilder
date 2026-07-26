@@ -1,10 +1,10 @@
 // =====================================================================
 // RFC 9110 §4.2 — http and https URI Schemes
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc9110.txt §4.2.1 (http)
-//          Documentation/References/RFCs/rfc9110.txt §4.2.2 (https)
-//          Documentation/References/RFCs/rfc9110.txt §4.2.3 (normalisation)
-//          Documentation/References/RFCs/rfc9110.txt §4.2.4 (deprecated userinfo)
+// Spec:    docs/References/RFCs/rfc9110.txt §4.2.1 (http)
+//          docs/References/RFCs/rfc9110.txt §4.2.2 (https)
+//          docs/References/RFCs/rfc9110.txt §4.2.3 (normalisation)
+//          docs/References/RFCs/rfc9110.txt §4.2.4 (deprecated userinfo)
 // Scope:   §4.2.1 / §4.2.2 — `http` and `https` URI grammar:
 //                            authority MUST be present, host MUST be non-empty,
 //                            default ports 80 / 443.

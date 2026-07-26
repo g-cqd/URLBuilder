@@ -62,12 +62,12 @@ domain names are covered by the IDNA RFCs, including RFC 5890.
   `.localhost`, `.local`, `.onion`, `.home.arpa`, `.alt`).
 - IANA Root Zone Database: complete list of currently delegated
   top-level domains. Mirrored at
-  `Documentation/References/TLDs/tlds-alpha-by-domain.txt`.
+  `docs/References/TLDs/tlds-alpha-by-domain.txt`.
 - Mozilla Public Suffix List (ICANN section): canonical list of
   public suffixes including multi-label entries (`co.uk`, `com.au`, …).
-  Mirrored at `Documentation/References/TLDs/public_suffix_list.dat`.
+  Mirrored at `docs/References/TLDs/public_suffix_list.dat`.
 - WHATWG URL Standard: living web-platform URL behavior. We mirror it
-  at `Documentation/References/WHATWG/url.html` purely as a divergence
+  at `docs/References/WHATWG/url.html` purely as a divergence
   baseline.
 
 Out-of-scope references:
@@ -247,11 +247,11 @@ Out-of-scope references:
 
 Tests are organised by RFC clause. Backtick test names and nearby test
 context cite the exact sections they exercise. See
-`Documentation/Appendix-StandardsCoverage.md` for the per-feature
+`docs/Appendix-StandardsCoverage.md` for the per-feature
 breakdown of guarantees and the tests that pin them. Local copies of
-every cited RFC live in `Documentation/References/RFCs/`; the
+every cited RFC live in `docs/References/RFCs/`; the
 indirect ISO/IEC 10646 dependency is mirrored by the Unicode UCD in
-`Documentation/References/ISO-IEC/`.
+`docs/References/ISO-IEC/`.
 
 ### Test files
 

@@ -1,7 +1,7 @@
 // =====================================================================
 // RFC 3986 §3.2.2 — Host: IPvFuture
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.2.2
+// Spec:    docs/References/RFCs/rfc3986.txt §3.2.2
 // Scope:   IPvFuture forward-compatibility grammar.
 // =====================================================================
 

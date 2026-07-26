@@ -1,7 +1,7 @@
 // =====================================================================
 // RFC 3986 §3.2.2 — Host: IPv4address
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.2.2
+// Spec:    docs/References/RFCs/rfc3986.txt §3.2.2
 // Scope:   dotted-quad IPv4 grammar; rejection of out-of-range and
 //          zero-padded octets.
 // =====================================================================

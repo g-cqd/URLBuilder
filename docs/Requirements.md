@@ -230,10 +230,10 @@ ABNF notation RFCs (RFC 5234 / 7405) and URI design/ownership guidance
 additional producer obligations on URLBuilder. The appendix lists them
 explicitly as out of scope.
 
-Local copies of every cited RFC live at `Documentation/References/RFCs/`.
-The Unicode UCD lives at `Documentation/References/ISO-IEC/`. The IANA
-TLD list and the Mozilla PSL live at `Documentation/References/TLDs/`.
-The WHATWG URL Standard lives at `Documentation/References/WHATWG/`.
+Local copies of every cited RFC live at `docs/References/RFCs/`.
+The Unicode UCD lives at `docs/References/ISO-IEC/`. The IANA
+TLD list and the Mozilla PSL live at `docs/References/TLDs/`.
+The WHATWG URL Standard lives at `docs/References/WHATWG/`.
 
 ---
 
@@ -332,13 +332,13 @@ By construction, the DSL mitigates:
 
 ## 9. Documentation Requirements
 
-- **D-1.** `Documentation/Standards.md` — the standards we follow and
+- **D-1.** `docs/Standards.md` — the standards we follow and
   the rationale behind each public API decision.
-- **D-2.** `Documentation/Requirements.md` — this file.
-- **D-3.** `Documentation/Appendix-StandardsCoverage.md` — per-feature
+- **D-2.** `docs/Requirements.md` — this file.
+- **D-3.** `docs/Appendix-StandardsCoverage.md` — per-feature
   coverage appendix listing the standards that back each guarantee and
   the test that locks it in.
-- **D-4.** `Documentation/References/` — local copies of every cited
+- **D-4.** `docs/References/` — local copies of every cited
   RFC, the Unicode UCD, the IANA Root Zone TLD list, the Mozilla
   Public Suffix List, and the WHATWG URL Standard, so readers can
   read the source text without leaving the repository.

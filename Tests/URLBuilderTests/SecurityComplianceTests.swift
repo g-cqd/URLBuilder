@@ -6,7 +6,7 @@
 // that motivates the rejection or acceptance.
 //
 // RFC text quoted from local copies in
-// `Documentation/References/RFCs/`.
+// `docs/References/RFCs/`.
 // =====================================================================
 
 import ADTestKit

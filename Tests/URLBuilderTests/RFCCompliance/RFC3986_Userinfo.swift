@@ -1,8 +1,8 @@
 // =====================================================================
 // RFC 3986 §3.2.1 / RFC 9110 §4.2.4 — Userinfo (deprecated)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.2.1
-//          Documentation/References/RFCs/rfc9110.txt §4.2.4
+// Spec:    docs/References/RFCs/rfc3986.txt §3.2.1
+//          docs/References/RFCs/rfc9110.txt §4.2.4
 // Scope:   userinfo is rejected by default, explicitly opt-in, and
 //          percent-encoded from raw username/password fields. Host
 //          labels containing `@` remain rejected because they would

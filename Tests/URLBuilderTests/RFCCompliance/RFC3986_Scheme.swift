@@ -1,8 +1,8 @@
 // =====================================================================
 // RFC 3986 §3.1 / RFC 7595 §3.8 — Scheme
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.1 + §6.2.2.1
-//          Documentation/References/RFCs/rfc7595.txt §3.8
+// Spec:    docs/References/RFCs/rfc3986.txt §3.1 + §6.2.2.1
+//          docs/References/RFCs/rfc7595.txt §3.8
 // Scope:   scheme ABNF, lowercase canonical form, registration syntax.
 // =====================================================================
 

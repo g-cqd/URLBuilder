@@ -4,15 +4,15 @@ This appendix records the quality guarantees URLBuilder delivers and
 the standards that back them. Every guarantee below is locked in by a
 test under `Tests/URLBuilderTests/`; the RFC clause is cited inline so
 the source text can be reached directly through
-`Documentation/References/`.
+`docs/References/`.
 
 The appendix complements `Standards.md` (rationale) and
 `Requirements.md` (scope and locked decisions). Local copies of every
-cited RFC live at `Documentation/References/RFCs/`. ISO/IEC 10646 is
-mirrored by the Unicode UCD at `Documentation/References/ISO-IEC/`.
+cited RFC live at `docs/References/RFCs/`. ISO/IEC 10646 is
+mirrored by the Unicode UCD at `docs/References/ISO-IEC/`.
 The IANA Root Zone TLD list and the Mozilla PSL live at
-`Documentation/References/TLDs/`. The WHATWG URL Standard archive
-lives at `Documentation/References/WHATWG/`.
+`docs/References/TLDs/`. The WHATWG URL Standard archive
+lives at `docs/References/WHATWG/`.
 
 ---
 

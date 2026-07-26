@@ -6,7 +6,7 @@ struct DocumentationCoverageTests {
     func `Appendix-cited test names exist in the test suite`() throws {
         let root = URL(
             filePath: FileManager.default.currentDirectoryPath, directoryHint: .isDirectory)
-        let appendixURL = root.appending(path: "Documentation/Appendix-StandardsCoverage.md")
+        let appendixURL = root.appending(path: "docs/Appendix-StandardsCoverage.md")
         let testsURL = root.appending(path: "Tests", directoryHint: .isDirectory)
 
         let appendix = try String(contentsOf: appendixURL, encoding: .utf8)
@@ -125,7 +125,7 @@ struct DocumentationCoverageTests {
 
     private func testName(from token: String) -> String? {
         let token = token.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard token.hasPrefix("Documentation/") == false,
+        guard token.hasPrefix("docs/") == false,
             token.hasPrefix("References/") == false,
             token.hasPrefix("RFCs/") == false,
             token.hasPrefix("ISO-IEC/") == false,

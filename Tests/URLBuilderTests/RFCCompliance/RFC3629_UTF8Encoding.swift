@@ -1,10 +1,10 @@
 // =====================================================================
 // RFC 3629 — UTF-8, a transformation format of ISO/IEC 10646
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3629.txt §3 (encoding form)
-//          Documentation/References/RFCs/rfc3986.txt §2.5 (encoding non-ASCII)
-//          Documentation/References/RFCs/rfc3987.txt §3.1 (IRI to URI)
-//          Documentation/References/ISO-IEC/iso-iec-10646-2020-FCD-unicode.org.pdf
+// Spec:    docs/References/RFCs/rfc3629.txt §3 (encoding form)
+//          docs/References/RFCs/rfc3986.txt §2.5 (encoding non-ASCII)
+//          docs/References/RFCs/rfc3987.txt §3.1 (IRI to URI)
+//          docs/References/ISO-IEC/iso-iec-10646-2020-FCD-unicode.org.pdf
 // Scope:   The 1- / 2- / 3- / 4-byte UTF-8 encoding form is the byte
 //          sequence that RFC 3986 §2.5 percent-encodes.  RFC 3987 §3.1
 //          mandates UTF-8 as the encoding when mapping an IRI's

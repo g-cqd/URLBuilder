@@ -1,8 +1,8 @@
 // =====================================================================
 // URLBuildConfiguration — opt-in public-suffix enforcement
 // ---------------------------------------------------------------------
-// Source:  Documentation/References/TLDs/public_suffix_list.dat
-//          Documentation/References/TLDs/tlds-alpha-by-domain.txt
+// Source:  docs/References/TLDs/public_suffix_list.dat
+//          docs/References/TLDs/tlds-alpha-by-domain.txt
 // Scope:   Verifies the opt-in `URLBuildConfiguration.tldEnforcement`
 //          mode rejects TLDs and host suffixes that are absent from
 //          `PublicSuffix.contains(_:)`. Default permissive behaviour

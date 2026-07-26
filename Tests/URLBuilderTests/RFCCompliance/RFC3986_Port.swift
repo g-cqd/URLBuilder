@@ -1,9 +1,9 @@
 // =====================================================================
 // RFC 3986 §3.2.3 — Port
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc3986.txt §3.2.3
-//          Documentation/References/RFCs/rfc9110.txt §4.2.1/§4.2.2
-//          Documentation/References/RFCs/rfc6335.txt §6 (port 0)
+// Spec:    docs/References/RFCs/rfc3986.txt §3.2.3
+//          docs/References/RFCs/rfc9110.txt §4.2.1/§4.2.2
+//          docs/References/RFCs/rfc6335.txt §6 (port 0)
 // Scope:   port grammar `*DIGIT`, valid TCP range, default-port omission.
 // =====================================================================
 

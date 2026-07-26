@@ -1,9 +1,9 @@
 // =====================================================================
 // RFC 5892 §2.2 / §2.3 — IDNA CONTEXTJ and CONTEXTO codepoints
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc5892.txt §2.2 + §2.3
-//          Documentation/References/RFCs/rfc5891.txt §4.2.3.3
-//          Documentation/References/ISO-IEC/DerivedCoreProperties.txt
+// Spec:    docs/References/RFCs/rfc5892.txt §2.2 + §2.3
+//          docs/References/RFCs/rfc5891.txt §4.2.3.3
+//          docs/References/ISO-IEC/DerivedCoreProperties.txt
 // Scope:   ZERO WIDTH JOINER / NON-JOINER (§2.2) and the script-specific
 //          §2.3 codepoints are PROTOCOL-VALID only when an explicit
 //          contextual rule applies. Outside those contexts they MUST be

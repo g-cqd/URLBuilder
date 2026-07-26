@@ -2,10 +2,10 @@
 // RFC 5892 — IDNA2008 codepoint classification
 //             (backed by Unicode / ISO/IEC 10646)
 // ---------------------------------------------------------------------
-// Spec:    Documentation/References/RFCs/rfc5892.txt
-//          Documentation/References/ISO-IEC/iso-iec-10646-2020-FCD-unicode.org.pdf
-//          Documentation/References/ISO-IEC/UnicodeData.txt
-//          Documentation/References/ISO-IEC/DerivedCoreProperties.txt
+// Spec:    docs/References/RFCs/rfc5892.txt
+//          docs/References/ISO-IEC/iso-iec-10646-2020-FCD-unicode.org.pdf
+//          docs/References/ISO-IEC/UnicodeData.txt
+//          docs/References/ISO-IEC/DerivedCoreProperties.txt
 //
 // RFC 5892 §1 derives every codepoint's IDNA category from properties
 // defined by the Unicode Standard, which shares its repertoire with
