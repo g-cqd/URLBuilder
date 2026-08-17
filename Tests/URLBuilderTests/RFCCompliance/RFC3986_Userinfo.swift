@@ -9,7 +9,7 @@
 //          smuggle userinfo through the host grammar.
 // =====================================================================
 
-import ADTestKit
+import AemiTestKit
 import Foundation
 import Testing
 import URLBuilder

@@ -19,7 +19,7 @@
 //          compliance; it is a targeted rendering preference.
 // =====================================================================
 
-import ADTestKit
+import AemiTestKit
 import Foundation
 import Testing
 import URLBuilder

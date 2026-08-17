@@ -12,7 +12,7 @@
 //          browser" refactor would be flagged immediately.
 // =====================================================================
 
-import ADTestKit
+import AemiTestKit
 import Foundation
 import Testing
 import URLBuilder

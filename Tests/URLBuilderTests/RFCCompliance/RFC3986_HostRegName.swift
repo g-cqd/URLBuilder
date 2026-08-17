@@ -7,7 +7,7 @@
 //          host case normalisation, trailing absolute-root dot.
 // =====================================================================
 
-import ADTestKit
+import AemiTestKit
 import Foundation
 import Testing
 import URLBuilder

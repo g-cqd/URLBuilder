@@ -51,7 +51,7 @@ let isDev = Context.environment["URLBUILDER_DEV"] != nil
 let adjsonDependency: Package.Dependency = .package(url: "https://github.com/g-cqd/ADJSON.git", branch: "main")
 
 let adfoundationDependency: Package.Dependency = .package(
-    url: "https://github.com/g-cqd/ADFoundation.git", branch: "main")
+    url: "https://github.com/Aemi-Studio/aemi.git", branch: "main")
 
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0"),
@@ -62,15 +62,13 @@ if isDev {
     // Shared lint/format tooling (Format/Lint/LintBuild plugins + canonical `.swift-format`).
     // Dev-only, resolved from the published `main` branch.
     packageDependencies.append(
-        .package(url: "https://github.com/g-cqd/ADBuildTools.git", branch: "main"))
-    packageDependencies.append(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
     // ordo-one's package-benchmark: the `swift package benchmark` plugin runs the `Benchmarks/`
     // suite with statistical rigor (p-percentile latency, malloc/throughput metrics). Dev-gated so
     // downstream consumers of URLBuilder never resolve it. Matches the sibling packages' setup.
     packageDependencies.append(
         .package(url: "https://github.com/ordo-one/benchmark", from: "1.4.0"))
-    // ADTestKit is folded into ADFoundation; the test target references it via `package: "ADFoundation"`
+    // ADTestKit is folded into ADFoundation; the test target references it via `package: "aemi"`
     // (adfoundationDependency is already a non-dev dependency for ADFCore + ADFMacroSupport).
 }
 
@@ -78,7 +76,7 @@ if isDev {
 // a library target would otherwise run for everyone who depends on URLBuilder, so it stays gated.
 let libraryBuildPlugins: [Target.PluginUsage] =
     isDev
-    ? ["PublicSuffixGeneratorPlugin", .plugin(name: "LintBuild", package: "ADBuildTools")]
+    ? ["PublicSuffixGeneratorPlugin", .plugin(name: "LintBuild", package: "aemi")]
     : ["PublicSuffixGeneratorPlugin"]
 
 let package = Package(
@@ -107,7 +105,7 @@ let package = Package(
             dependencies: [
                 "URLBuilderMacros",
                 .product(name: "ADJSON", package: "ADJSON"),
-                .product(name: "ADFCore", package: "ADFoundation")
+                .product(name: "AemiKernel", package: "aemi")
             ],
             swiftSettings: strictSettings,
             plugins: libraryBuildPlugins
@@ -121,7 +119,7 @@ let package = Package(
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
                 .product(name: "SwiftDiagnostics", package: "swift-syntax"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
-                .product(name: "ADFMacroSupport", package: "ADFoundation")
+                .product(name: "AemiMacroSupport", package: "aemi")
             ],
             swiftSettings: strictSettings
         ),
@@ -149,7 +147,7 @@ let package = Package(
                 // Unconditional: 8 test files import ADTestKit with no `#if canImport` guard, so
                 // gating this behind URLBUILDER_DEV made a plain `swift test` a hard compile failure.
                 // ADFoundation is already a non-dev dependency, so this costs consumers nothing.
-                .product(name: "ADTestKit", package: "ADFoundation"),
+                .product(name: "AemiTestKit", package: "aemi"),
                 // On a clean build SwiftPM links the `URLBuilderMacros` *-testable* object into this
                 // bundle too (it is only meant to be a compile-time plugin for the `URLBuilder` library);
                 // that object references swift-syntax + the compiler-plugin runtime, so without these

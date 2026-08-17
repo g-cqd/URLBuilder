@@ -23,7 +23,7 @@
 // platform divergence is caught at build time.
 // =====================================================================
 
-import ADTestKit
+import AemiTestKit
 import Foundation
 import Testing
 import URLBuilder
