@@ -25,10 +25,10 @@ swift build                 # build the library
 swift test                  # run the test + RFC-conformance suite
 
 swift package format        # format in place  (add --allow-writing-to-package-directory if prompted)
-swift package lint          # formatting gate + shipped-library discipline (what CI runs)
+swift package --disable-sandbox lint          # formatting gate + shipped-library discipline (what CI runs)
 ```
 
-`swift package lint` is the single source of truth for the lint rules: `swift format lint
+`swift package --disable-sandbox lint` is the single source of truth for the lint rules: `swift format lint
 --strict`, plus the shipped-library discipline in `Sources/URLBuilder` (no force-unwrap /
 force-try / force-cast, and no planning artifacts — `TODO`/`FIXME`/`Phase N`/`[Pn]` — or stray
 `print(`). Fix formatting with `swift package format`. A single reviewed exception can be annotated
@@ -77,28 +77,28 @@ The `format` and `lint` command plugins are dependency-free and work without the
 ## Dependencies & `Package.resolved`
 
 The shipped graph is intentionally small: **swift-syntax** (the `@URLQuery` / `#URL` macros need
-it) and **ADJSON** (the JSON encoding path for `Encodable` query values). swift-docc-plugin is
+it) and **AemiJSON** (the JSON encoding path for `Encodable` query values). swift-docc-plugin is
 gated behind `URLBUILDER_DEV` so consumers never resolve it.
 
 `Package.resolved` is **gitignored** (the library convention — an application pins exact versions,
 a library lets its consumers' resolution win).
 
-> **Note:** while ADJSON is pinned to its `main` branch (it has not yet tagged a release), a
+> **Note:** while AemiJSON is pinned to its `main` branch (it has not yet tagged a release), a
 > *tagged* URLBuilder release cannot itself be resolved through `.package(url:from:)` — SwiftPM
-> forbids a versioned package from depending on an unversioned one. Switch the ADJSON requirement
+> forbids a versioned package from depending on an unversioned one. Switch the AemiJSON requirement
 > to a `from:` tag before publishing a versioned URLBuilder release.
 
-### Developing against ADJSON
+### Developing against AemiJSON
 
-ADJSON always resolves from the published `main` branch — there is no local-checkout override. To
-iterate on URLBuilder and ADJSON together, push the ADJSON change and re-resolve
-(`swift package update ADJSON`).
+AemiJSON always resolves from the published `main` branch — there is no local-checkout override. To
+iterate on URLBuilder and AemiJSON together, push the AemiJSON change and re-resolve
+(`swift package update AemiJSON`).
 
 ## Git hooks
 
 Committed in `.githooks/` and enabled via `core.hooksPath` (above):
 
-- **pre-commit** → `swift package lint` (check-only; blocks the commit on violations).
+- **pre-commit** → `swift package --disable-sandbox lint` (check-only; blocks the commit on violations).
 - **pre-push** → `swift test`.
 
 ## CI & documentation

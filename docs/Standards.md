@@ -187,7 +187,7 @@ Out-of-scope references:
   `String`, `Substring`, `UUID`, `Date`, and `RawRepresentable` over a
   convertible raw value — renders as a plain value. Any other `Encodable`
   value renders as compact JSON (sorted keys, slashes unescaped) via
-  [ADJSON](https://github.com/g-cqd/ADJSON), which `URLComponents` then
+  [AemiJSON](https://github.com/g-cqd/AemiJSON), which `URLComponents` then
   percent-encodes. When a type satisfies both, the convertible path wins.
 - We expose `URLQueryRepresentable` for DTOs that expand to multiple
   query items. The `@URLQuery` macro can synthesize that conformance
@@ -293,7 +293,7 @@ Other test files:
   they incidentally exercise.
 - `Tests/URLBuilderTests/ShorthandTests.swift` — DSL shorthand and query-value
   rendering, including the scalar matrix (`Bool`, `Int`, `Double`, `Decimal`
-  via `description`, `String`) and the compact-JSON `Encodable` path via ADJSON.
+  via `description`, `String`) and the compact-JSON `Encodable` path via AemiJSON.
 - `Tests/URLBuilderTests/QueryDeduplicationTests.swift` — opt-in
   query-deduplication policies and their interaction with query flags
   and form URL encoding.

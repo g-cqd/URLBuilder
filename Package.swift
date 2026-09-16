@@ -38,25 +38,25 @@ let testSettings: [SwiftSetting] =
 
 // Dev-only tooling is gated behind `URLBUILDER_DEV` so packages that depend on URLBuilder never
 // resolve it. Contributors and CI set `URLBUILDER_DEV=1` to enable the DocC plugin
-// (`swift package generate-documentation`) and the shared ADBuildTools `format` / `lint` / `LintBuild`
+// (`swift package generate-documentation`) and the shared Aemi `format` / `lint` / `LintBuild`
 // plugins, which resolve only with the flag set (CI and the git hooks set it).
 let isDev = Context.environment["URLBUILDER_DEV"] != nil
 
 // First-party dependencies always resolve from the published `main` branch.
-//   • ADJSON       — JSON encoding for `Encodable` query values: sorted keys,
+//   • AemiJSON       — JSON encoding for `Encodable` query values: sorted keys,
 //                    unescaped slashes, Foundation-free core
-//   • ADFoundation — `ADFCore` ASCII / byte primitives
+//   • Aemi — `AemiKernel` ASCII / byte primitives
 // (Branch-pinned, so a tagged URLBuilder release cannot itself be resolved via
 // `.package(url:from:)` — SwiftPM forbids a versioned package depending on an unversioned one.)
-let adjsonDependency: Package.Dependency = .package(url: "https://github.com/g-cqd/ADJSON.git", branch: "main")
+let aemiJSONDependency: Package.Dependency = .package(url: "https://github.com/g-cqd/AemiJSON.git", branch: "main")
 
-let adfoundationDependency: Package.Dependency = .package(
+let aemiDependency: Package.Dependency = .package(
     url: "https://github.com/Aemi-Studio/aemi.git", branch: "main")
 
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0"),
-    adjsonDependency,
-    adfoundationDependency
+    aemiJSONDependency,
+    aemiDependency
 ]
 if isDev {
     // Shared lint/format tooling (Format/Lint/LintBuild plugins + canonical `.swift-format`).
@@ -68,8 +68,8 @@ if isDev {
     // downstream consumers of URLBuilder never resolve it. Matches the sibling packages' setup.
     packageDependencies.append(
         .package(url: "https://github.com/ordo-one/benchmark", from: "1.4.0"))
-    // ADTestKit is folded into ADFoundation; the test target references it via `package: "aemi"`
-    // (adfoundationDependency is already a non-dev dependency for ADFCore + ADFMacroSupport).
+    // AemiTestKit is folded into Aemi; the test target references it via `package: "aemi"`
+    // (aemiDependency is already a non-dev dependency for AemiKernel + AemiMacroSupport).
 }
 
 // Build-time formatting enforcement attaches to the library only in dev/CI. A build-tool plugin on
@@ -81,10 +81,10 @@ let libraryBuildPlugins: [Target.PluginUsage] =
 
 let package = Package(
     name: "URLBuilder",
-    // The deployment floor is pinned by ADJSON's `Synchronization` (`Mutex`/`Atomic`) requirement,
+    // The deployment floor is pinned by AemiJSON's `Synchronization` (`Mutex`/`Atomic`) requirement,
     // which ships in macOS 15 / iOS 18 / tvOS 18 / watchOS 11 / visionOS 2. URLBuilder itself only
-    // needs macOS 13 / iOS 16 (for `host(percentEncoded:)`), so the ADJSON dependency is what sets
-    // the floor here. (The Swift 6.3 tools-version is a *toolchain* requirement, not a deployment one.)
+    // needs macOS 13 / iOS 16 (for `host(percentEncoded:)`), so the AemiJSON dependency is what sets
+    // the floor here. (The Swift 6.4 tools-version is a *toolchain* requirement, not a deployment one.)
     platforms: [
         .macOS(.v15),
         .iOS(.v18),
@@ -104,7 +104,7 @@ let package = Package(
             name: "URLBuilder",
             dependencies: [
                 "URLBuilderMacros",
-                .product(name: "ADJSON", package: "ADJSON"),
+                .product(name: "AemiJSON", package: "AemiJSON"),
                 .product(name: "AemiKernel", package: "aemi")
             ],
             swiftSettings: strictSettings,
@@ -139,14 +139,14 @@ let package = Package(
                 .target(name: "public-suffix-generator")
             ]
         ),
-        // Format / lint / LintBuild come from the shared ADBuildTools dev dependency.
+        // Format / lint / LintBuild come from the shared Aemi dev dependency.
         .testTarget(
             name: "URLBuilderTests",
             dependencies: [
                 "URLBuilder", "PublicSuffixGeneratorCore",
-                // Unconditional: 8 test files import ADTestKit with no `#if canImport` guard, so
+                // Unconditional: 8 test files import AemiTestKit with no `#if canImport` guard, so
                 // gating this behind URLBUILDER_DEV made a plain `swift test` a hard compile failure.
-                // ADFoundation is already a non-dev dependency, so this costs consumers nothing.
+                // Aemi is already a non-dev dependency, so this costs consumers nothing.
                 .product(name: "AemiTestKit", package: "aemi"),
                 // On a clean build SwiftPM links the `URLBuilderMacros` *-testable* object into this
                 // bundle too (it is only meant to be a compile-time plugin for the `URLBuilder` library);

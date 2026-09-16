@@ -179,7 +179,7 @@ A query value renders one of two ways. Any type conforming to
 its base-10 `description`), `UUID`, and `Date`, plus `RawRepresentable`
 enums over a convertible raw value. Any other `Encodable` value renders as
 compact JSON (sorted keys, slashes unescaped) via
-[ADJSON](https://github.com/g-cqd/ADJSON), which `URLComponents` then
+[AemiJSON](https://github.com/g-cqd/AemiJSON), which `URLComponents` then
 percent-encodes:
 
 ```swift
@@ -350,7 +350,7 @@ reference.
 - **Swift 6.3 toolchain or later** (a *toolchain* requirement; the macros and
   strict-concurrency settings need it).
 - **Deployment floor: macOS 15 / iOS 18 / tvOS 18 / watchOS 11 / visionOS 2.**
-  This is set by the [ADJSON](https://github.com/g-cqd/ADJSON) dependency's use
+  This is set by the [AemiJSON](https://github.com/g-cqd/AemiJSON) dependency's use
   of `Synchronization` (`Mutex`/`Atomic`); URLBuilder itself only needs
   macOS 13 / iOS 16 (for `host(percentEncoded:)`).
 - A platform with the standard BSD/POSIX IP-address parsing routines
@@ -361,7 +361,7 @@ reference.
 
 - [**swift-syntax**](https://github.com/swiftlang/swift-syntax) — powers the
   `@URLQuery` / `#URL` macros.
-- [**ADJSON**](https://github.com/g-cqd/ADJSON) — the JSON encoding path for
+- [**AemiJSON**](https://github.com/g-cqd/AemiJSON) — the JSON encoding path for
   `Encodable` query values (sorted keys, unescaped slashes, Foundation-free
   core).
 

@@ -116,7 +116,7 @@ validation step into the type system or the build step itself.
   `UUID`/`Date`, and `RawRepresentable` over a convertible raw value),
   producing a plain value — `Decimal` uses its base-10 `description`. Any
   other `Encodable` value renders as compact JSON (sorted keys, slashes
-  unescaped) via ADJSON.
+  unescaped) via AemiJSON.
 - **F-Query-5.** Query deduplication is configurable. `.none` is the
   default and preserves repeated keys. `.firstWins` and `.lastWins`
   collapse repeated keys while keeping the first occurrence's rendered

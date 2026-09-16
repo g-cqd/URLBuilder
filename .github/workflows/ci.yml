@@ -30,8 +30,8 @@ env:
 jobs:
   quality:
     # Full-adopt of the reusable workflow for the COMMON gate + build/test (macOS + Linux, debug +
-    # release, coverage on the debug macOS leg). URLBuilder depends on the first-party siblings ADJSON
-    # and ADFoundation (resolved from branch: main — Package.swift lines 51 & 58, in the always-on
+    # release, coverage on the debug macOS leg). URLBuilder depends on the first-party siblings AemiJSON
+    # and Aemi (resolved from branch: main — Package.swift lines 51 & 58, in the always-on
     # dependency array), so the resolution-dependent jobs stay gated on AD_SWIFT_SIBLINGS_PUBLISHED;
     # the file-based gates (format/metrics/drift) always run. This replaces the bespoke macOS gate and
     # the advisory `nightly-main-jammy` Linux lane with the canonical dated-nightly Linux matrix.
@@ -169,8 +169,8 @@ jobs:
     # build flags, so a downstream package can depend on it *by URL* (source control) and resolve
     # the graph. A throwaway consumer pins this repo by `file://` URL at the commit under test and
     # runs `swift package resolve`. URLBuilder is pinned by revision (itself unversioned), so its
-    # branch-pinned ADJSON dependency resolves cleanly; switch the consumer to `from:` once both
-    # URLBuilder and ADJSON publish versioned tags.
+    # branch-pinned AemiJSON dependency resolves cleanly; switch the consumer to `from:` once both
+    # URLBuilder and AemiJSON publish versioned tags.
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v6
@@ -239,9 +239,7 @@ jobs:
             spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-
             spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-
       - name: Test under address + undefined sanitizers
-        # URLBUILDER_DEV wires the dev-only ADTestKit (from the ADFoundation umbrella) into the test
-        # target; without it the suite fails dependency scanning on `import ADTestKit`. The reusable
-        # workflow sets this via its `dev-env-var` input, but this bespoke leg must set it itself.
+        # Match the reusable workflow's development-tooling configuration.
         run: URLBUILDER_DEV=1 swift test --sanitize=address --sanitize=undefined
 
   docs:

@@ -44,7 +44,7 @@ Two entry points cover the static and dynamic cases:
   known public suffix, matched iteratively against an embedded, build-time-generated list. See
   <doc:PublicSuffixes>.
 - **Deterministic queries.** Scalars render through ``URLQueryValueConvertible``; `Encodable`
-  values render as compact JSON (sorted keys, unescaped slashes) via the ADJSON engine. See
+  values render as compact JSON (sorted keys, unescaped slashes) via the AemiJSON engine. See
   <doc:QueriesAndEncoding>.
 
 ## Topics

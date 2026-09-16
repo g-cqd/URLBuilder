@@ -43,7 +43,7 @@ coverage; the repository's `Documentation/Standards.md` and
 | --- | --- |
 | RFC 6335 / 9110 §4.2.1 | Port range `1...65535`; port 0 rejected |
 | RFC 3629 | UTF-8 well-formedness for component text |
-| RFC 8259 (via ADJSON) | Compact JSON rendering of `Encodable` query values (sorted keys) |
+| RFC 8259 (via AemiJSON) | Compact JSON rendering of `Encodable` query values (sorted keys) |
 
 ## Divergences from WHATWG
 

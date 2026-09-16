@@ -14,9 +14,9 @@ In `Package.swift`:
 .target(name: "MyApp", dependencies: ["URLBuilder"])
 ```
 
-> Note: URLBuilder depends on [ADJSON](https://github.com/g-cqd/ADJSON) for its `Encodable`
-> query-value JSON path. While ADJSON is pinned to `main`, a *tagged* URLBuilder release cannot
-> be resolved through `.package(url:from:)`; pin a `from:` tag once ADJSON publishes one.
+> Note: URLBuilder depends on [AemiJSON](https://github.com/g-cqd/AemiJSON) for its `Encodable`
+> query-value JSON path. While AemiJSON is pinned to `main`, a *tagged* URLBuilder release cannot
+> be resolved through `.package(url:from:)`; pin a `from:` tag once AemiJSON publishes one.
 
 ## Two entry points
 
@@ -110,7 +110,7 @@ let url = try withThrowingURL(configuration: .default.queryDeduplication(.lastWi
 ## Requirements
 
 - Swift 6.3+ toolchain (language mode v6).
-- macOS 15+ / iOS 18+ / tvOS 18+ / watchOS 11+ / visionOS 2+ (the floor inherited from ADJSON's
+- macOS 15+ / iOS 18+ / tvOS 18+ / watchOS 11+ / visionOS 2+ (the floor inherited from AemiJSON's
   `Synchronization` dependency).
 
 ## Next steps

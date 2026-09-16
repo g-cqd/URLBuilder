@@ -14,7 +14,7 @@ A ``Query`` value is rendered one of two ways, chosen by overload resolution:
    convertible get a default conformance.
 
 2. **Encodable path** — any other `Encodable` value renders as **compact JSON** (sorted keys,
-   slashes left unescaped), produced by the ADJSON engine. A value that encodes to a top-level
+   slashes left unescaped), produced by the AemiJSON engine. A value that encodes to a top-level
    JSON string is unwrapped to its raw contents rather than a quoted literal.
 
 When a type satisfies *both* (e.g. a `RawRepresentable & Encodable` enum), the scalar path wins —
