@@ -49,13 +49,13 @@ let isDev = Context.environment["URLBUILDER_DEV"] != nil
 // (Branch-pinned, so a tagged URLBuilder release cannot itself be resolved via
 // `.package(url:from:)` — SwiftPM forbids a versioned package depending on an unversioned one.)
 let aemiJSONDependency: Package.Dependency = .package(
-    url: "https://github.com/g-cqd/AemiJSON.git", revision: "001c0a99a64e58a226e5851fedf1324a5fa2470c")
+    url: "https://github.com/g-cqd/AemiJSON.git", revision: "e8a6b0e5db6671cb73ddd80348defd0c3275245e")
 
 let aemiDependency: Package.Dependency = .package(
-    url: "https://github.com/Aemi-Studio/aemi.git", revision: "639caad90b0a8409185a712f32f9dea795e6470c")
+    url: "https://github.com/Aemi-Studio/aemi.git", revision: "08e7c649c013e43fad927e31c01cb7c925c50796")
 
 var packageDependencies: [Package.Dependency] = [
-    .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0"),
+    .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "604.0.0"),
     aemiJSONDependency,
     aemiDependency
 ]
@@ -63,12 +63,12 @@ if isDev {
     // Shared lint/format tooling (Format/Lint/LintBuild plugins + canonical `.swift-format`).
     // Dev-only, resolved from the published `main` branch.
     packageDependencies.append(
-        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0"))
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.5.0"))
     // ordo-one's package-benchmark: the `swift package benchmark` plugin runs the `Benchmarks/`
     // suite with statistical rigor (p-percentile latency, malloc/throughput metrics). Dev-gated so
     // downstream consumers of URLBuilder never resolve it. Matches the sibling packages' setup.
     packageDependencies.append(
-        .package(url: "https://github.com/ordo-one/benchmark", from: "1.4.0"))
+        .package(url: "https://github.com/ordo-one/benchmark", from: "1.38.0"))
     // AemiTestKit is folded into Aemi; the test target references it via `package: "aemi"`
     // (aemiDependency is already a non-dev dependency for AemiKernel + AemiMacroSupport).
 }
