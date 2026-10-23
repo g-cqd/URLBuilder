@@ -38,7 +38,7 @@ jobs:
     # Sanitizers and docs are NOT enabled here: the package-unique `sanitizers` job below is path-gated
     # to the IPv6 validator and combines address+undefined in one run, and the `docs` job below also
     # DEPLOYS to GitHub Pages — neither is covered by the reusable's (unconditional, generate-only) legs.
-    uses: Aemi-Studio/aemi/.github/workflows/swift-quality.yml@27ce7cb54adcb6daec28a596ed1bc3946edf4fb0 # main
+    uses: Aemi-Studio/aemi/.github/workflows/swift-quality.yml@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
     with:
       # arcleak and dolly GATE (arcleak measured 0 findings family-wide; dolly runs the token
       # pass against .dolly-baseline.json, so only NEW clones fail). deadwood is report-only —
@@ -62,8 +62,8 @@ jobs:
     outputs:
       validator: ${{ steps.filter.outputs.validator }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
         id: filter
         with:
           filters: |
@@ -78,13 +78,13 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
       - name: Select latest Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@27ce7cb54adcb6daec28a596ed1bc3946edf4fb0 # main
+        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
       - name: Diagnose API breaking changes vs base
         run: swift package diagnose-api-breaking-changes "${{ github.event.pull_request.base.sha }}"
 
@@ -106,13 +106,13 @@ jobs:
           - { platform: "watchOS (arm64)", sdk: watchos, triple: arm64-apple-watchos11.0 }
           - { platform: visionOS, sdk: xros, triple: arm64-apple-xros2.0 }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Select latest Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@27ce7cb54adcb6daec28a596ed1bc3946edf4fb0 # main
+        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
       - name: Cache SwiftPM platform build
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~/Library/Caches/org.swift.swiftpm
@@ -134,13 +134,13 @@ jobs:
     # same inputs must produce a byte-identical file. Run the standalone generator twice and diff.
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Select latest Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@27ce7cb54adcb6daec28a596ed1bc3946edf4fb0 # main
+        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
       - name: Cache SwiftPM
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             .build
@@ -173,11 +173,11 @@ jobs:
     # URLBuilder and AemiJSON publish versioned tags.
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Select latest Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@27ce7cb54adcb6daec28a596ed1bc3946edf4fb0 # main
+        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
       - name: Resolve a throwaway consumer that depends on URLBuilder by URL
         run: |
           set -euo pipefail
@@ -218,15 +218,15 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Select latest Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@27ce7cb54adcb6daec28a596ed1bc3946edf4fb0 # main
+        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
       - name: Show toolchain
         run: swift --version
       - name: Cache SwiftPM
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             .build
@@ -261,13 +261,13 @@ jobs:
     env:
       URLBUILDER_DEV: "1"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Select latest Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@27ce7cb54adcb6daec28a596ed1bc3946edf4fb0 # main
+        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
       - name: Cache SwiftPM
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             .build
@@ -295,9 +295,9 @@ jobs:
           <a href="documentation/urlbuilder/">URLBuilder documentation</a>
           HTML
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: _site
       - name: Deploy to GitHub Pages
         id: deploy
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
