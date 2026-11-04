@@ -1,57 +1,37 @@
-# The COMMON legs (lint/gate, build & test on macOS + Linux) route through the shared reusable
-# workflow. The package-UNIQUE jobs run alongside it: an API-stability check, a cross-platform
-# compile matrix, the public-suffix generator reproducibility check, a downstream URL-resolvability
-# check, a path-gated ASan/UBSan pass over the IPv6 C-interop, and the DocC build + Pages deploy.
 name: CI
 
+# swift-ci plans and runs the checks from .ci/action.json (https://github.com/g-cqd/swift-ci); .ci/README.md lists
+# what runs when. `.ci/swift-ci local` runs the same checks on a developer's machine.
 on:
   push:
     branches: [main]
-    paths-ignore: ["README.md", "CONTRIBUTING.md", "LICENSE", ".gitignore", ".githooks/**"]
   pull_request:
-    paths-ignore: ["README.md", "CONTRIBUTING.md", "LICENSE", ".gitignore", ".githooks/**"]
-  # On-demand trigger for the slow platform / sanitizer / docs jobs.
+  merge_group:
+  schedule:
+    - cron: "17 3 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Cancel superseded runs on branches/PRs; never cancel an in-progress run on main.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'schedule' }}
 
-# Type-check-budget calibration for the manifest's env-tunable -warn-long-* flags on the BESPOKE
-# jobs below (the reusable swift-quality workflow exports its own copy for the common legs):
-# 250 ms absorbs shared-runner wall-time noise; local builds keep the strict 100 ms default.
+# The manifest's -warn-long-* budget for this package's own jobs (swift-ci exports the same for its checks).
 env:
   AD_TYPECHECK_BUDGET_MS: "250"
 
 jobs:
-  quality:
-    # Full-adopt of the reusable workflow for the COMMON gate + build/test (macOS + Linux, debug +
-    # release, coverage on the debug macOS leg). URLBuilder depends on the first-party siblings AemiJSON
-    # and Aemi (resolved from branch: main — Package.swift lines 51 & 58, in the always-on
-    # dependency array), so the resolution-dependent jobs stay gated on AD_SWIFT_SIBLINGS_PUBLISHED;
-    # the file-based gates (format/metrics/drift) always run. This replaces the bespoke macOS gate and
-    # the advisory `nightly-main-jammy` Linux lane with the canonical dated-nightly Linux matrix.
-    # Sanitizers and docs are NOT enabled here: the package-unique `sanitizers` job below is path-gated
-    # to the IPv6 validator and combines address+undefined in one run, and the `docs` job below also
-    # DEPLOYS to GitHub Pages — neither is covered by the reusable's (unconditional, generate-only) legs.
-    uses: Aemi-Studio/aemi/.github/workflows/swift-quality.yml@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
-    with:
-      # arcleak and dolly GATE (arcleak measured 0 findings family-wide; dolly runs the token
-      # pass against .dolly-baseline.json, so only NEW clones fail). deadwood is report-only —
-      # its syntax-mode dataflow cannot see writes through closures or mutating methods.
-      enable-static-analysis: true
-      dev-env-var: URLBUILDER_DEV
-      enable-sanitizers: true
-      sanitizers: "address thread"
-      enable-coverage: true
+  ci:
+    name: Checks
+    uses: g-cqd/swift-ci/.github/workflows/swift-ci.yml@4843bd85121c134890fa0ca8c9c2af246008e814 # swift-ci 4843bd8
+    permissions:
+      contents: write # reusable publish permission; this package publishes no archives
 
   changes:
-    name: Detect IPv6 / validator changes
-    needs: quality
+    name: Plan · Detect IPv6 Validator Changes
+    needs: ci
     # Path gate for the sanitizer pass. The one unsafe boundary in the library is the IPv6 literal
     # path, which calls the platform C library (`inet_pton`/`inet_ntop`) in `URLValidator.swift`.
     # A PR touching the validator should trip ASan/UBSan too; other PRs skip the slow pass.
@@ -62,8 +42,10 @@ jobs:
     outputs:
       validator: ${{ steps.filter.outputs.validator }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
+      - name: Setup · Check Out Sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Plan · Classify Changed Paths
+        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
         id: filter
         with:
           filters: |
@@ -71,26 +53,29 @@ jobs:
               - 'Sources/URLBuilder/URLValidator.swift'
 
   api-stability:
-    name: API breaking changes
-    needs: quality
+    name: Compatibility · Public API
+    needs: ci
     # Catch accidental public-API removals/changes in PRs (additions are fine). Compares the PR head
     # against the PR's base commit on main.
     if: github.event_name == 'pull_request'
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup · Check Out Sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
-      - name: Select latest Xcode
+      - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
-      - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
-      - name: Diagnose API breaking changes vs base
+      - name: Setup · Install Swift 6.4.1
+        uses: swift-actions/setup-swift@364295d9c23900ce04d4e5cc708387921b4e50f9 # v3.0.0-beta.1
+        with:
+          swift-version: "6.4.1"
+      - name: Compatibility · Diagnose Breaking Changes
         run: swift package diagnose-api-breaking-changes "${{ github.event.pull_request.base.sha }}"
 
   platforms:
-    name: Build (${{ matrix.platform }})
-    needs: quality
+    name: Compatibility · ${{ matrix.platform }}
+    needs: ci
     # Cross-platform compile is broad but costly: run it on main / on demand, not on every PR
     # (the macOS leg in the reusable `quality` job already covers compilation for PRs).
     if: github.event_name != 'pull_request'
@@ -106,40 +91,46 @@ jobs:
           - { platform: "watchOS (arm64)", sdk: watchos, triple: arm64-apple-watchos11.0 }
           - { platform: visionOS, sdk: xros, triple: arm64-apple-xros2.0 }
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Select latest Xcode
+      - name: Setup · Check Out Sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
-      - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
-      - name: Cache SwiftPM platform build
+      - name: Setup · Install Swift 6.4.1
+        uses: swift-actions/setup-swift@364295d9c23900ce04d4e5cc708387921b4e50f9 # v3.0.0-beta.1
+        with:
+          swift-version: "6.4.1"
+      - name: Cache · Restore Platform Build
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~/Library/Caches/org.swift.swiftpm
             .build
-          key: platform-spm-${{ runner.os }}-${{ matrix.platform }}-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**') }}
+          key: platform-spm-${{ runner.os }}-${{ matrix.platform }}-6.4.1-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**') }}
           restore-keys: |
-            platform-spm-${{ runner.os }}-${{ matrix.platform }}-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-
-            platform-spm-${{ runner.os }}-${{ matrix.platform }}-${{ env.TOOLCHAINS }}-
-      - name: Build for ${{ matrix.platform }}
+            platform-spm-${{ runner.os }}-${{ matrix.platform }}-6.4.1-${{ hashFiles('Package.swift') }}-
+            platform-spm-${{ runner.os }}-${{ matrix.platform }}-6.4.1-
+      - name: Compatibility · Build for ${{ matrix.platform }}
         run: |
           sdk_path="$(xcrun --sdk '${{ matrix.sdk }}' --show-sdk-path)"
           swift build --sdk "$sdk_path" --triple '${{ matrix.triple }}' --target URLBuilder
 
   generator-reproducibility:
-    name: Public-suffix generator reproducibility
-    needs: quality
+    name: Generated Sources · Public Suffix List
+    needs: ci
     # `Sources/URLBuilder/PublicSuffix.swift` is generated at build time from the vendored IANA +
     # Mozilla inputs and is NOT committed. Generation must be deterministic: regenerating from the
     # same inputs must produce a byte-identical file. Run the standalone generator twice and diff.
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Select latest Xcode
+      - name: Setup · Check Out Sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
-      - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
-      - name: Cache SwiftPM
+      - name: Setup · Install Swift 6.4.1
+        uses: swift-actions/setup-swift@364295d9c23900ce04d4e5cc708387921b4e50f9 # v3.0.0-beta.1
+        with:
+          swift-version: "6.4.1"
+      - name: Cache · Restore SwiftPM
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
@@ -149,9 +140,9 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-gen-${{ hashFiles('Package.swift') }}-
             spm-${{ runner.os }}-gen-
-      - name: Build the generator
+      - name: Generated Sources · Build Generator
         run: swift build --product public-suffix-generator
-      - name: Regenerate twice and assert byte-identical output
+      - name: Generated Sources · Regenerate & Compare
         run: |
           set -euo pipefail
           BIN="$(swift build --product public-suffix-generator --show-bin-path)/public-suffix-generator"
@@ -163,8 +154,8 @@ jobs:
           echo "Generator output is reproducible."
 
   downstream-resolvability:
-    name: Downstream resolvability (URL dependency)
-    needs: quality
+    name: Compatibility · Downstream Resolution
+    needs: ci
     # Locks the round-1 dependency-safety fix: the shipped `URLBuilder` product carries no unsafe
     # build flags, so a downstream package can depend on it *by URL* (source control) and resolve
     # the graph. A throwaway consumer pins this repo by `file://` URL at the commit under test and
@@ -173,12 +164,15 @@ jobs:
     # URLBuilder and AemiJSON publish versioned tags.
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Select latest Xcode
+      - name: Setup · Check Out Sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
-      - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
-      - name: Resolve a throwaway consumer that depends on URLBuilder by URL
+      - name: Setup · Install Swift 6.4.1
+        uses: swift-actions/setup-swift@364295d9c23900ce04d4e5cc708387921b4e50f9 # v3.0.0-beta.1
+        with:
+          swift-version: "6.4.1"
+      - name: Compatibility · Resolve a URL Consumer
         run: |
           set -euo pipefail
           REPO="$PWD"
@@ -205,8 +199,8 @@ jobs:
           echo "URLBuilder resolves as a URL-based dependency."
 
   sanitizers:
-    name: Sanitize (address + undefined)
-    needs: [quality, changes]
+    name: Sanitizers · Address & Undefined · macOS
+    needs: [ci, changes]
     # ASan/UBSan rebuild the whole graph under instrumentation, so run them on main / on demand —
     # and, additionally, on any PR that touches the IPv6 C-interop in `URLValidator.swift` (gated by
     # the `changes` job), the one place an OOB / use-after-free could be introduced. The full test
@@ -218,14 +212,17 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Select latest Xcode
+      - name: Setup · Check Out Sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
-      - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
-      - name: Show toolchain
+      - name: Setup · Install Swift 6.4.1
+        uses: swift-actions/setup-swift@364295d9c23900ce04d4e5cc708387921b4e50f9 # v3.0.0-beta.1
+        with:
+          swift-version: "6.4.1"
+      - name: Setup · Report Swift Version
         run: swift --version
-      - name: Cache SwiftPM
+      - name: Cache · Restore SwiftPM
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
@@ -234,39 +231,30 @@ jobs:
           # TOOLCHAINS (exported by setup-swift above) is part of the key: a `.build` produced by a
           # DIFFERENT snapshot fails clang dependency scanning when restored, so cross-toolchain
           # fallbacks are excluded (the stale-incremental class the family tracks as #14).
-          key: spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**', 'Tests/**', 'Plugins/**') }}
+          key: spm-${{ runner.os }}-san-6.4.1-${{ hashFiles('Package.swift') }}-${{ hashFiles('Sources/**', 'Tests/**', 'Plugins/**') }}
           restore-keys: |
-            spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-${{ hashFiles('Package.swift') }}-
-            spm-${{ runner.os }}-san-${{ env.TOOLCHAINS }}-
-      - name: Test under address + undefined sanitizers
+            spm-${{ runner.os }}-san-6.4.1-${{ hashFiles('Package.swift') }}-
+            spm-${{ runner.os }}-san-6.4.1-
+      - name: Sanitizers · Run Tests
         # Match the reusable workflow's development-tooling configuration.
         run: URLBUILDER_DEV=1 swift test --sanitize=address --sanitize=undefined
 
   docs:
-    name: Build & deploy docs (Pages)
-    needs: quality
-    if: github.ref == 'refs/heads/main'
+    name: Documentation · Validate
+    needs: ci
     runs-on: macos-26
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-    # Serialize Pages deploys without cancelling an in-flight publish.
-    concurrency:
-      group: pages
-      cancel-in-progress: false
     env:
       URLBUILDER_DEV: "1"
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Select latest Xcode
+      - name: Setup · Check Out Sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
-      - name: Install Swift 6.4 dev toolchain (no hosted macOS image ships 6.4)
-        uses: Aemi-Studio/aemi/.github/actions/setup-swift@afc1be3d578045b381e76f6b1712a81b39956ced # aemi afc1be3
-      - name: Cache SwiftPM
+      - name: Setup · Install Swift 6.4.1
+        uses: swift-actions/setup-swift@364295d9c23900ce04d4e5cc708387921b4e50f9 # v3.0.0-beta.1
+        with:
+          swift-version: "6.4.1"
+      - name: Cache · Restore SwiftPM
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
@@ -276,7 +264,7 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-docs-${{ hashFiles('Package.swift') }}-
             spm-${{ runner.os }}-docs-
-      - name: Build DocC site (static hosting)
+      - name: Documentation · Build & Validate Site
         run: |
           swift package --allow-writing-to-directory "$PWD/_site" \
             generate-documentation --target URLBuilder \
@@ -284,7 +272,7 @@ jobs:
             --transform-for-static-hosting \
             --hosting-base-path URLBuilder \
             --output-path "$PWD/_site"
-      - name: Add root redirect to the documentation landing page
+      - name: Documentation · Add Root Redirect
         run: |
           cat > _site/index.html <<'HTML'
           <!doctype html>
@@ -294,10 +282,30 @@ jobs:
           <title>URLBuilder</title>
           <a href="documentation/urlbuilder/">URLBuilder documentation</a>
           HTML
-      - name: Upload Pages artifact
+      - name: Artifacts · Upload Documentation
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: _site
-      - name: Deploy to GitHub Pages
+
+  docs-publish:
+    name: Documentation · Publish
+    # Deploys the site the validation job built: one build, and the github-pages environment (main only) is
+    # entered by main's runs alone, so a pull request never asks for it.
+    needs: docs
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    # Serialize Pages deploys without cancelling an in-flight publish.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Documentation · Deploy Pages
         id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5

@@ -1,0 +1,20 @@
+{
+  "swift": {
+    "environment": {
+      "URLBUILDER_DEV": "1"
+    }
+  },
+  "quality": {
+    "discipline": {
+      "shipped": [
+        "Sources/URLBuilder"
+      ],
+      "forceUnwrap": true,
+      "rules": [
+        "inline-prng",
+        "untyped-throws",
+        "wall-clock"
+      ]
+    }
+  }
+}
