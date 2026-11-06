@@ -49,10 +49,10 @@ let isDev = Context.environment["URLBUILDER_DEV"] != nil
 // (Branch-pinned, so a tagged URLBuilder release cannot itself be resolved via
 // `.package(url:from:)` — SwiftPM forbids a versioned package depending on an unversioned one.)
 let aemiJSONDependency: Package.Dependency = .package(
-    url: "https://github.com/g-cqd/AemiJSON.git", revision: "8b7bfe373d2b36dbfe8e7ec068478b1aea65b12a")
+    url: "https://github.com/g-cqd/AemiJSON.git", revision: "5aa84e0eca14c344f4fc0b313dbb907dc1446b9e")
 
 let aemiDependency: Package.Dependency = .package(
-    url: "https://github.com/Aemi-Studio/aemi.git", revision: "409c647a91736065ac53c1877abe2cf4840f7617")
+    url: "https://github.com/Aemi-Studio/aemi.git", revision: "0bae2edb1a89bd3d931fb3122c2184cc5c368834")
 
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "604.0.0"),
