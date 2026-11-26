@@ -43,9 +43,9 @@ jobs:
       validator: ${{ steps.filter.outputs.validator }}
     steps:
       - name: Setup · Check Out Sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Plan · Classify Changed Paths
-        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
           filters: |
@@ -61,7 +61,7 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Setup · Check Out Sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Setup · Select Xcode
@@ -92,7 +92,7 @@ jobs:
           - { platform: visionOS, sdk: xros, triple: arm64-apple-xros2.0 }
     steps:
       - name: Setup · Check Out Sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Setup · Install Swift 6.4.1
@@ -100,7 +100,7 @@ jobs:
         with:
           swift-version: "6.4.1"
       - name: Cache · Restore Platform Build
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/Library/Caches/org.swift.swiftpm
@@ -123,7 +123,7 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Setup · Check Out Sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Setup · Install Swift 6.4.1
@@ -131,7 +131,7 @@ jobs:
         with:
           swift-version: "6.4.1"
       - name: Cache · Restore SwiftPM
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .build
@@ -165,7 +165,7 @@ jobs:
     runs-on: macos-26
     steps:
       - name: Setup · Check Out Sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Setup · Install Swift 6.4.1
@@ -213,7 +213,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Setup · Check Out Sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Setup · Install Swift 6.4.1
@@ -223,7 +223,7 @@ jobs:
       - name: Setup · Report Swift Version
         run: swift --version
       - name: Cache · Restore SwiftPM
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .build
@@ -247,7 +247,7 @@ jobs:
       URLBUILDER_DEV: "1"
     steps:
       - name: Setup · Check Out Sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup · Select Xcode
         run: sudo xcode-select -s "$(find /Applications -maxdepth 1 -type d -name 'Xcode_*.app' | sort -V | tail -1)"
       - name: Setup · Install Swift 6.4.1
@@ -255,7 +255,7 @@ jobs:
         with:
           swift-version: "6.4.1"
       - name: Cache · Restore SwiftPM
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .build
