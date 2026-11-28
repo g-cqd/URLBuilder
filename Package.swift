@@ -26,10 +26,10 @@ let testSettings: [SwiftSetting] =
 let isDev = Context.environment["URLBUILDER_DEV"] != nil
 
 let aemiJSONDependency: Package.Dependency = .package(
-    url: "https://github.com/g-cqd/AemiJSON.git", revision: "b6aaf0127cc480b33090dc4564324b7abfdcb408")
+    url: "https://github.com/g-cqd/AemiJSON.git", revision: "4d3fd43b02889f186178801dc599fdb5615bc4ad")
 
 let aemiDependency: Package.Dependency = .package(
-    url: "https://github.com/Aemi-Studio/aemi.git", revision: "8633e6352822d15fc11e46b69da6a76adee72f31")
+    url: "https://github.com/Aemi-Studio/aemi.git", revision: "7aca98cb8cccc833cbfd19f0fee50d29c69df163")
 
 var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "604.0.0"),
